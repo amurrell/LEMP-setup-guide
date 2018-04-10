@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+
+# Prompt for things
+
+## Set up a site?
+read -p "Do you want to setup a site? " -n 1 -r
+echo    # (optional) move to a new line
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+    printf "Okay, stopping script. Things are installed... carry on. Set up a site later using ./setup-site in scripts folder.\n"
+    exit 1;
+fi
+
+## D - Domain
+read -p "Your Domain, ie: yoursite.com" DOMAIN
+
+if [ "$DOMAIN" == '' ]; then
+    printf "You must specify a domain, ie: yoursite.com\n"
+    exit 1
+fi
+
+if [ -d "/var/www/$DOMAIN" ];
+    printf "A folder for this domain already exists, delete/back it up first.\n"
+    exit 1;
+fi
+
+echo "$DOMAIN" >> tempdomain.txt
+sed -i 's/\./_/g' tempdomain.txt
+DOMAIN_COM=$(cat tempdomain.txt)
+rm tempdomain.txt
+
+
+
+# PROMPT - Github Repo URL
+read -p "Your Github Repo (use ssh url git@github.com:youruser/yourrepo.git):" GITHUB
+
+if [ ! "$GITHUB" == "" ]; then
+    cd /var/www
+    git clone "$GITHUB" "$DOMAIN"
+else
+    cd /var/www/
+    mkdir "$DOMAIN"
+    printf "Without a github repo, you are responsible for putting your files into /var/www/$DOMAIN\n" 
+fi
+
+# Create nginx site config
+cp /var/www/LEMP-setup-guide/config/site.nginx.conf /etc/sites-available/"$DOMAIN.conf"
+sed -i "s/SITEDOTCOM/${DOMAIN}/g;" "$DOMAIN.conf"
+sed -i "s/SITE_COM/${DOMAIN_COM}/g;" "$DOMAIN.conf"
+
+# Create php site config
