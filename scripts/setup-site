@@ -75,6 +75,11 @@ sed -i "s/SITEDOTCOM/${DOMAIN}/g;" "$DOMAIN.conf"
 sed -i "s/SITE_COM/${DOMAIN_COM}/g;" "$DOMAIN.conf"
 ln -s /etc/nginx/sites-available/"${DOMAIN}.conf" /etc/nginx/sites-enabled/
 
+# TEST nginx
+sudo nginx -t
+# Try to reload nginx
+sudo service nginx reload
+
 # Create php site config
 mkdir -p /etc/php/7.2/fpm/pool.d/
 cp /var/www/LEMP-setup-guide/config/site.php-fpm.conf /etc/php/7.2/fpm/pool.d/"$DOMAIN.conf"
@@ -105,6 +110,12 @@ then
     sed -i "s/DATABASEHOST/${DATABASE_HOST}/g;" "$DOMAIN.conf"
     sed -i "s/DATABASEPASS/${DATABASE_PASS}/g;" "$DOMAIN.conf"
     sed -i "s/DATABASEPORT/${DATABASE_PORT}/g;" "$DOMAIN.conf"
+
+    # test php
+    sudo php-fpm7.2 -t
+
+    # restart php
+    sudo service php7.2-fpm reload
 
     read -p "Do you want to setup a local mysql database using the info for php env vars above? " -n 1 -r
     echo    # (optional) move to a new line

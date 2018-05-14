@@ -7,7 +7,8 @@ if [ ! -d "/var/www" ]; then
     mkdir /var/www/
 fi
 
-sudo apt-get install git
+printf "Installing git...\n"
+sudo apt-get install -y git
 
 read -p "Did you forward your ssh agent so you can git clone with ssh (git@github.com)? " -n 1 -r
 echo    # (optional) move to a new line

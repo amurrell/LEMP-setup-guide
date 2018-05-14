@@ -324,7 +324,7 @@ sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F2
 sudo add-apt-repository 'deb [arch=amd64,i386] http://mirrors.supportex.net/mariadb/repo/10.3/ubuntu xenial main'
 sudo apt-get update
 sudo apt-get install -y dialog apt-utils
-sudo apt-get install mariadb-server
+sudo apt-get install -y mariadb-server
 
 # export DEBIAN_FRONTEND=noninteractive
 # sudo debconf-set-selections <<< 'mariadb-server-10.3 mysql-server/root_password password root'

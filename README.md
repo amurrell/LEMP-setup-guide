@@ -12,6 +12,18 @@ sudo chmod +x install
 ./install
 ```
 
+---
+
+### During & After The Script
+
+- You'll get prompted for your ssh public key (to setup authorized keys for easier ssh access)
+
+- You'll get prompted to setup mariadb password, just use "password" for now. After everything is installed, you can run `sudo mysql_secure_installation* and follow prompts to remove test databases, anonymous users, and change the root password to something more secure.
+
+- If you choose to **skip setting up a site**, you can always run the setup-site script later from `/var/www/LEMP-setup-guide/scripts/`. You can setup multiple sites using this script, one per run.
+
+---
+
 ## Use SimpleDocker to test script
 
 [SimpleDocker](https://github.com/amurrell/SimpleDocker) is just an ubuntu 16.04 Docker Container that you can use to test the scripts in the scripts folder.
