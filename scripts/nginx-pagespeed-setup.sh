@@ -36,7 +36,7 @@ if ($http_cookie ~* "comment_author|wordpress_[a-f0-9]+|wp-postpass|wordpress_no
 
 location ~ \.php$ {
     include fastcgi.conf;
-    fastcgi_pass unix:/run/php/php7.0-fpm.sock;
+    fastcgi_pass unix:/run/php/php7.2-fpm.sock;
 
     try_files $uri =404;
     fastcgi_split_path_info ^(.+\.php)(/.+)$;
@@ -321,39 +321,62 @@ echo "$fastcgicache" > /etc/nginx/conf/fastcgicache.conf
 
 # Mariadb
 sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
-sudo add-apt-repository 'deb [arch=amd64,i386] http://mirrors.supportex.net/mariadb/repo/10.1/ubuntu xenial main'
+sudo add-apt-repository 'deb [arch=amd64,i386] http://mirrors.supportex.net/mariadb/repo/10.3/ubuntu xenial main'
 sudo apt-get update
-export DEBIAN_FRONTEND=noninteractive
-sudo debconf-set-selections <<< 'mariadb-server-10.1 mysql-server/root_password password root'
-sudo debconf-set-selections <<< 'mariadb-server-10.1 mysql-server/root_password_again password root'
-sudo apt-get install -y mariadb-server > /dev/null
+sudo apt-get install -y dialog apt-utils
+sudo apt-get install mariadb-server
+
+# export DEBIAN_FRONTEND=noninteractive
+# sudo debconf-set-selections <<< 'mariadb-server-10.3 mysql-server/root_password password root'
+# sudo debconf-set-selections <<< 'mariadb-server-10.3 mysql-server/root_password_again password root'
+# sudo apt-get install -y mariadb-server > /dev/null
 sudo service mysql start
 
 # PHP
-sudo apt-get install -y php-fpm php-mysql
+sudo apt-get install -y software-properties-common
+sudo apt-get install -y python-software-properties
+LC_ALL=C.UTF-8 sudo add-apt-repository -y ppa:ondrej/php
+sudo apt-get update
+sudo apt-get -y --no-install-recommends install php7.2
+sudo apt-get -y --no-install-recommends install php7.2-fpm
+sudo apt-get clean
+
+# PHP
+sudo apt-get update && \
+	sudo apt-get install -y php-curl && \
+	sudo apt-get install -y php-mysql && \
+	sudo apt-get -y install php-pear && \
+	sudo apt-get -y install php-dev && \
+	sudo apt-get -y install libcurl3-openssl-dev && \
+	sudo apt-get -y install libyaml-dev && \
+	sudo apt-get -y install php-zip && \
+	sudo apt-get -y install php-mbstring && \
+	sudo apt-get -y install php-memcached && \
+	sudo apt-get -y install php-pgsql && \
+	sudo apt-get -y install php-xml && \
+    sudo apt-get -y install php-gd
 
 # FastCGI microcaching
-sed -i 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g' /etc/php/7.0/fpm/php.ini
-sed -i "s/^;listen.owner = www-data/listen.owner = www-data/g" /etc/php/7.0/fpm/pool.d/www.conf
-sed -i "s/^;listen.group = www-data/listen.group = www-data/g" /etc/php/7.0/fpm/pool.d/www.conf
-sed -i "s/^;listen.mode = 0660/listen.mode = 0660/" /etc/php/7.0/fpm/pool.d/www.conf
+sed -i 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g' /etc/php/7.2/fpm/php.ini
+sed -i "s/^;listen.owner = www-data/listen.owner = www-data/g" /etc/php/7.2/fpm/pool.d/www.conf
+sed -i "s/^;listen.group = www-data/listen.group = www-data/g" /etc/php/7.2/fpm/pool.d/www.conf
+sed -i "s/^;listen.mode = 0660/listen.mode = 0660/" /etc/php/7.2/fpm/pool.d/www.conf
 mkdir /var/nginx_cache
 
 # Default contents
-mkdir /var/www/
-mkdir /var/www/localhost
+mkdir -p /var/www/localhost
 echo '<?php phpinfo(); ?>' > /var/www/localhost/index.php
 
+# mcrypt for 7.2 is a pecl extension, so i got rid of it for now.
+
 # adminer and sendy modules
-apt-get install -y php-mcrypt php-mbstring php7.0-curl php7.0-xml php7.0-gd
-phpenmod mcrypt
 phpenmod mbstring
 phpenmod curl
 phpenmod xml
 phpenmod xmlreader
 phpenmod simplexml
 phpenmod gd
-service php7.0-fpm restart
+service php7.2-fpm restart
 mkdir /var/www/localhost/adminer
 cd /var/www/localhost/adminer
 wget -O index.php https://www.adminer.org/static/download/4.2.4/adminer-4.2.4-mysql.php
@@ -391,12 +414,21 @@ mkdir /etc/nginx/sites-enabled/
 mv /etc/nginx/sites/* /etc/nginx/sites-available/
 
 # PROMPT - SSH PUBLIC KEY (Authorized Keys)
-read -p "Your SSH public key...paste it" SSHPUBKEY
+cr=`echo $'\n.'`
+cr=${cr%.}
+read -p "Your SSH public key...paste it $cr" SSHPUBKEY
 
-if [! "$SSHPUBKEY"]; then
+# Check if /var/www exists
+if [ ! -d "~/.ssh/" ]; then  
+    printf "SSH folder does not seem to exist for this user. Going to create the folder now.\n"
+    cd ~/ && mkdir .ssh
+fi
+
+if [ ! "$SSHPUBKEY" == '' ]; then
     echo "$SSHPUBKEY" > ~/.ssh/authorized_keys
 fi
 
 # Prompt Site Setup
+cd /var/www/LEMP-setup-guide/scripts
 ./setup-site
 
