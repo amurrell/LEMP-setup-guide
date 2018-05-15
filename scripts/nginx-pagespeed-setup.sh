@@ -419,7 +419,7 @@ cr=${cr%.}
 read -p "Your SSH public key...paste it $cr" SSHPUBKEY
 
 # Check if /var/www exists
-if [ ! -d "~/.ssh/" ]; then  
+if [ ! -d "/root/.ssh/" ]; then  
     printf "SSH folder does not seem to exist for this user. Going to create the folder now.\n"
     cd ~/ && mkdir .ssh
 fi

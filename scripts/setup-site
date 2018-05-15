@@ -68,17 +68,39 @@ else
     printf "Without a github repo or ssh setup, you are responsible for putting your files into /var/www/$DOMAIN\n" 
 fi
 
-# Create nginx site config
-cp /var/www/LEMP-setup-guide/config/site.nginx.conf /etc/nginx/sites-available/"$DOMAIN.conf"
-cd /etc/nginx/sites-available/
-sed -i "s/SITEDOTCOM/${DOMAIN}/g;" "$DOMAIN.conf"
-sed -i "s/SITE_COM/${DOMAIN_COM}/g;" "$DOMAIN.conf"
-ln -s /etc/nginx/sites-available/"${DOMAIN}.conf" /etc/nginx/sites-enabled/
+# NGINX - Proxy or not to proxy?
+read -p "Do you need to setup nginx with upstreams and php?" -n 1 -r
+echo    # (optional) move to a new line
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    # Create nginx site config with PHP upstreams
+    cp /var/www/LEMP-setup-guide/config/site.nginx.conf /etc/nginx/sites-available/"$DOMAIN.conf"
+    cd /etc/nginx/sites-available/
+    sed -i "s/SITEDOTCOM/${DOMAIN}/g;" "$DOMAIN.conf"
+    sed -i "s/SITE_COM/${DOMAIN_COM}/g;" "$DOMAIN.conf"
+    ln -s /etc/nginx/sites-available/"${DOMAIN}.conf" /etc/nginx/sites-enabled/
+else
+    # Create nginx config with proxy pass
+    cp /var/www/LEMP-setup-guide/config/site.nginx.proxy.conf /etc/nginx/sites-available/"$DOMAIN.conf"
+    cd /etc/nginx/sites-available/
+    sed -i "s/SITEDOTCOM/${DOMAIN}/g;" "$DOMAIN.conf"
+    sed -i "s/SITE_COM/${DOMAIN_COM}/g;" "$DOMAIN.conf"
+    ln -s /etc/nginx/sites-available/"${DOMAIN}.conf" /etc/nginx/sites-enabled/
+fi
 
 # TEST nginx
 sudo nginx -t
 # Try to reload nginx
 sudo service nginx reload
+
+# No PHP?
+read -p "Do you need to set up PHP FPM pools?" -n 1 -r
+echo    # (optional) move to a new line
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+    printf "Okay, stopping script then.\n"
+    exit 1
+fi
 
 # Create php site config
 mkdir -p /etc/php/7.2/fpm/pool.d/
