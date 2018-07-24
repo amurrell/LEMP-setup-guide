@@ -11,7 +11,7 @@ fi
 printf "checking if registered...\n"
 certbot register
 if [ $? -eq 0 ]; then
-  # registering
+  printf "assuming you went through registration...\n"
 else 
   printf "already registered!\n" 
 fi
