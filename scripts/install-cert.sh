@@ -5,10 +5,18 @@ if ! [ -x "$(command -v certbot)" ]; then
   LC_ALL=C.UTF-8 sudo add-apt-repository -y ppa:certbot/certbot
   sudo apt-get update
   sudo apt-get install -y python-certbot-nginx 
-
 fi
 
-CERTBOT_CMD='certbot certonly --cert-name'
+# check registered
+printf "checking if registered...\n"
+certbot register
+if [ $? -eq 0 ]; then
+  # registering
+else 
+  printf "already registered!\n" 
+fi
+
+CERTBOT_CMD='certbot certonly --non-interactive --keep-until-expiring --post-hook "sudo service nginx reload" --cert-name'
 
 # PROMPT - Certificate name
 read -p "Certificate name, eg your-site.com:" CERTNAME
@@ -17,7 +25,6 @@ CERTBOT_CMD="$CERTBOT_CMD $CERTNAME"
 
 # PROMPT - domains to secure, eg. yoursite.com,www.yoursite.com
 read -p "Domain to secure, eg. yoursite.com,www.yoursite.com: " SITEDOMAINS
-
 
 for i in $(echo $SITEDOMAINS | sed "s/,/ /g")
 do
@@ -32,6 +39,33 @@ done
 # the cert could fail to validate via webroot challenge so you may want to convert back to non ssl and no redirects before
 # running this. This is a weird case that could happen though.
 eval $CERTBOT_CMD
+
+
+# NGINX SSL CERT CODE?
+read -p "Do you want to create a cron for this cert?. (y)|(n): " -n 1 -r
+echo    # (optional) move to a new line
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+  # Save command as script
+  echo "${CERTBOT_CMD}" > "cert-cron-scripts/$DOMAIN.sh"
+  sudo chmod +x "cert-cron-scripts/$DOMAIN.sh"
+
+  ## get current cron text
+  if [ $(crontab -l | wc -c) -eq 0 ]; then
+    echo crontab is empty
+    touch curcron
+  else 
+    crontab -l > curcron
+  fi
+
+  #echo new cron into cron file
+  # 43 6 * * * certbot renew --post-hook "systemctl reload nginx"
+  echo "00 09 * * 1-5 /var/www/LEMP-setup-guide/scripts/cert-cron-scripts/$DOMAIN.sh" >> curcron
+  #install new cron file
+  crontab curcron
+  rm curcron
+fi
+
 
 # NGINX SSL CERT CODE?
 read -p "Do you want nginx SSL cert config to get generated? It will override what you have now. (y)|(n): " -n 1 -r
