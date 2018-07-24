@@ -11,33 +11,35 @@ fi
 CERTBOT_CMD='certbot certonly --cert-name'
 
 # PROMPT - Certificate name
-read -p "Certificate name, eg mysitescerts:" CERTNAME
+read -p "Certificate name, eg your-site.com:" CERTNAME
 
 CERTBOT_CMD="$CERTBOT_CMD $CERTNAME"
 
 # PROMPT - domains to secure, eg. yoursite.com,www.yoursite.com
-read -p "Domain to secure, eg. yoursite.com,www.yoursite.com:" SITEDOMAINS
+read -p "Domain to secure, eg. yoursite.com,www.yoursite.com: " SITEDOMAINS
 
 
 for i in $(echo $SITEDOMAINS | sed "s/,/ /g")
 do
   # PROMPT - webroot for domain $i
-  read -p "Webroot for domain $i, eg. /var/www/yoursite.com/app/dist" CUR_WEBROOT
+  read -p "Webroot for domain $i, eg. /var/www/yoursite.com/app/dist: " CUR_WEBROOT
 
   # APPEND
   CERTBOT_CMD="$CERTBOT_CMD --webroot -w $CUR_WEBROOT -d $i"
 done
 
-printf "The command to run is:\n"
-printf "$CERTBOT_CMD\n"
+# if you forgot www.your-site.com and go to add it and nginx has config to redirect to https://yoursite.com
+# the cert could fail to validate via webroot challenge so you may want to convert back to non ssl and no redirects before
+# running this. This is a weird case that could happen though.
+eval $CERTBOT_CMD
 
 # NGINX SSL CERT CODE?
-read -p "Do you want nginx SSL cert config to get generated? It will override what you have now..." -n 1 -r
+read -p "Do you want nginx SSL cert config to get generated? It will override what you have now. (y)|(n): " -n 1 -r
 echo    # (optional) move to a new line
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
   # PROMPT - for the main domain
-  read -p "Main domain to use for config, eg. yoursite.com" DOMAIN
+  read -p "Main domain to use for config, eg. yoursite.com: " DOMAIN
 
   # CREATE the domain_com variable eg yoursite_com
   echo "$DOMAIN" >> tempdomain.txt
@@ -46,7 +48,7 @@ then
   rm tempdomain.txt
 
   # NGINX - Proxy or not to proxy?
-  read -p "Do you need to setup nginx config with upstreams and php?" -n 1 -r
+  read -p "Do you need to setup nginx config with upstreams and php? (y)|(n): " -n 1 -r
   echo    # (optional) move to a new line
   if [[ $REPLY =~ ^[Yy]$ ]]
   then
