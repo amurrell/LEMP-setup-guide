@@ -46,6 +46,9 @@ read -p "Do you want to create a cron for this cert?. (y)|(n): " -n 1 -r
 echo    # (optional) move to a new line
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
+  # PROMPT - for the main domain
+  read -p "Main domain to use for name of command to run on cron, eg. yoursite.com: " DOMAIN
+
   # Save command as script
   echo "${CERTBOT_CMD}" > "cert-cron-scripts/$DOMAIN.sh"
   sudo chmod +x "cert-cron-scripts/$DOMAIN.sh"
@@ -58,9 +61,20 @@ then
     crontab -l > curcron
   fi
 
-  #echo new cron into cron file
-  # 43 6 * * * certbot renew --post-hook "systemctl reload nginx"
-  echo "00 09 * * 1-5 /var/www/LEMP-setup-guide/scripts/cert-cron-scripts/$DOMAIN.sh" >> curcron
+  #echo new cron into cron file ...
+
+  
+  # * * * * * "command to be executed"
+  # - - - - -
+  # | | | | |
+  # | | | | ----- Day of week (0 - 7) (Sunday=0 or 7)
+  # | | | ------- Month (1 - 12)
+  # | | --------- Day of month (1 - 31)
+  # | ----------- Hour (0 - 23)
+  # ------------- Minute (0 - 59)
+
+  # a */12 in second from left would mean every 12 hours (the slash makes it an every...)
+  echo "* */12 * * * /var/www/LEMP-setup-guide/scripts/cert-cron-scripts/$DOMAIN.sh" >> curcron
   #install new cron file
   crontab curcron
   rm curcron
