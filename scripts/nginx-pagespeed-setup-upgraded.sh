@@ -47,7 +47,23 @@ sudo apt-get update
 sudo apt-get -y upgrade
 
 # Dependencies etc
-sudo apt-get install -y git build-essential python dpkg-dev zlib1g-dev libpcre3 libpcre3-dev unzip software-properties-common python-software-properties
+sudo apt-get install -y wget
+sudo apt-get install -y git
+sudo apt-get install -y build-essential
+sudo apt-get install -y python
+sudo apt-get install -y dpkg-dev
+sudo apt-get install -y zlib1g-dev
+sudo apt-get install -y libpcre3
+sudo apt-get install -y libpcre3-dev
+sudo apt-get install -y unzip
+sudo apt-get install -y software-properties-common
+sudo apt-get install -y uuid-dev
+
+# Avoid php packaging prompts - setting a timezone
+export DEBIAN_FRONTEND=noninteractive
+apt-get install -y tzdata
+# ln -fs /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
+dpkg-reconfigure --frontend noninteractive tzdata
 
 # Pagespeed download
 NPS_VERSION=1.13.35.2-stable
@@ -69,13 +85,14 @@ wget -qO - https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz | ta
 cd
 
 # Nginx Download
+mkdir -p /etc/nginx
 NGINX_VERSION=1.15.9
 cd
 wget http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz
 tar -xvzf nginx-${NGINX_VERSION}.tar.gz
 cd nginx-${NGINX_VERSION}/
 ./configure \
---add-module=$HOME/$nps_dir ${PS_NGX_EXTRA_FLAGS}
+--add-module=$HOME/$nps_dir ${PS_NGX_EXTRA_FLAGS} \
 --prefix=/etc/nginx  \
 --sbin-path=/usr/sbin/nginx  \
 --conf-path=/etc/nginx/nginx.conf  \
@@ -121,17 +138,17 @@ make
 sudo make install
 
 # Finish installing pagespeed and nginx configuration
-mkdir /var/log/ngx_pagespeed
-mkdir /var/cache/nginx/
-mkdir /var/cache/nginx/client_temp
+mkdir -p /var/log/ngx_pagespeed
+mkdir -p /var/cache/nginx/
+mkdir -p /var/cache/nginx/client_temp
 git clone https://github.com/Fleshgrinder/nginx-sysvinit-script.git
 cd nginx-sysvinit-script
 make
 
 sudo update-rc.d -f nginx defaults
 
-mkdir /etc/nginx/conf
-mkdir /etc/nginx/sites
+mkdir -p /etc/nginx/conf
+mkdir -p /etc/nginx/sites
 echo "$global_nginx_conf" > /etc/nginx/nginx.conf;
 echo "$fastcgicache_global" > /etc/nginx/conf/fastcgicache_global.conf
 echo "$nginx_conf" > /etc/nginx/sites/default;
@@ -146,13 +163,11 @@ sudo add-apt-repository 'deb [arch=amd64,i386] http://mirror.zol.co.zw/mariadb/r
 sudo apt-get update
 sudo apt update
 sudo apt-get install -y dialog apt-utils
-sudo apt-get install -y mariadb-server
-
-# export DEBIAN_FRONTEND=noninteractive
-# sudo debconf-set-selections <<< 'mariadb-server-10.3 mysql-server/root_password password root'
-# sudo debconf-set-selections <<< 'mariadb-server-10.3 mysql-server/root_password_again password root'
-# sudo apt-get install -y mariadb-server > /dev/null
+sudo debconf-set-selections <<< 'mariadb-server-10.3 mysql-server/root_password password PASS'
+sudo debconf-set-selections <<< 'mariadb-server-10.3 mysql-server/root_password_again password PASS'
+sudo apt-get install -y mariadb-server > /dev/null
 sudo service mysql start
+mysql -uroot -pPASS -e "SET PASSWORD = PASSWORD('password');"
 
 # PHP
 LC_ALL=C.UTF-8 sudo add-apt-repository -y ppa:ondrej/php
@@ -181,11 +196,7 @@ sed -i 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g' /etc/php/7.3/fpm/php.ini
 sed -i "s/^;listen.owner = www-data/listen.owner = www-data/g" /etc/php/7.3/fpm/pool.d/www.conf
 sed -i "s/^;listen.group = www-data/listen.group = www-data/g" /etc/php/7.3/fpm/pool.d/www.conf
 sed -i "s/^;listen.mode = 0660/listen.mode = 0660/" /etc/php/7.3/fpm/pool.d/www.conf
-mkdir /var/nginx_cache
-
-# Default contents
-mkdir -p /var/www/localhost
-echo '<?php phpinfo(); ?>' > /var/www/localhost/index.php
+mkdir -p /var/nginx_cache
 
 # mcrypt for 7.3 is a pecl extension, so i got rid of it for now.
 
@@ -197,16 +208,6 @@ phpenmod xmlreader
 phpenmod simplexml
 phpenmod gd
 service php7.3-fpm restart
-mkdir /var/www/localhost/adminer
-cd /var/www/localhost/adminer
-wget -O index.php https://www.adminer.org/static/download/4.2.4/adminer-4.2.4-mysql.php
-
-
-# Firewall
-# ufw allow ssh
-# ufw allow http
-# ufw allow https
-# yes | ufw enable
 
 # auto security updates
 touch /etc/cron.daily/apt-security-updates
@@ -226,8 +227,8 @@ fi
 
 cd /etc/nginx
 sed -i "s=include /etc/nginx/sites=include /etc/nginx/sites-enabled=g;" nginx.conf
-mkdir /etc/nginx/sites-available/
-mkdir /etc/nginx/sites-enabled/
+mkdir -p /etc/nginx/sites-available/
+mkdir -p /etc/nginx/sites-enabled/
 mv /etc/nginx/sites/* /etc/nginx/sites-available/
 
 # PROMPT - SSH PUBLIC KEY (Authorized Keys)
@@ -238,7 +239,7 @@ read -p "Your SSH public key...paste it $cr" SSHPUBKEY
 # Check if /var/www exists
 if [ ! -d "/root/.ssh/" ]; then  
     printf "SSH folder does not seem to exist for this user. Going to create the folder now.\n"
-    cd ~/ && mkdir .ssh
+    cd ~/ && mkdir -p .ssh
 fi
 
 if [ ! "$SSHPUBKEY" == '' ]; then
