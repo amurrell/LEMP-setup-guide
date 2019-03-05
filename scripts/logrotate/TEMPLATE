@@ -7,7 +7,7 @@ LOG_PATH*.log {
     create 0640 www-data www-data
     sharedscripts
     postrotate
-        systemctl reload php7.2-fpm
+        systemctl reload PHP_FPM
         systemctl reload nginx
     endscript
 }
