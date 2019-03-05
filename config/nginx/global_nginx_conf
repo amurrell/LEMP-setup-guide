@@ -1,0 +1,30 @@
+user  www-data www-data;
+worker_processes  WORKER_PROCESSES;
+events {
+    worker_connections  WORKER_CONNECTIONS;
+}
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+    server_tokens off;
+    sendfile        on;
+    #tcp_nopush     on;
+    # Gzip configuration
+    include /etc/nginx/conf/gzip.conf;
+    #PHP and FastCGI cache
+    include /etc/nginx/conf/fastcgicache_global.conf;
+    # Add my servers
+    include /etc/nginx/sites/*;
+    # Buffers
+    client_body_buffer_size 10K;
+    client_header_buffer_size 1k;
+    client_max_body_size 8m;
+    large_client_header_buffers 2 1k;
+    # Timeouts
+    client_body_timeout 12;
+    client_header_timeout 12;
+    keepalive_timeout 15;
+    send_timeout 10;
+    # Log off
+    access_log off;
+}

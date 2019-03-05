@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+# Check logrotate exists
+if ! type "logrotate" > /dev/null; then
+    printf "Does not seem that logrotate is installed properly... do that first.\n"
+    exit 1
+fi
+
+# Prompt for things
+## Set up a logrotate?
+read -p "Do you want to setup a logrotate? " -n 1 -r
+echo    # (optional) move to a new line
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+    printf "Okay, stopping script. Set up logrotation later using ./setup-logrotate in scripts folder.\n"
+    exit 1;
+fi
+
+## D - Domain
+read -p "Your Domain - to save the logrotate conf as, ie: yoursite.com $cr" DOMAIN
+
+if [ "$DOMAIN" == '' ]; then
+    printf "You must specify a domain, ie: yoursite.com\n"
+    exit 1
+fi
+
+if [ -d "/etc/logrotate.d/$DOMAIN" ]; then
+    printf "A logrotate configuration file for this domain already exists, delete/back it up first.\n"
+    exit 1
+fi
+
+echo "$DOMAIN" >> tempdomain.txt
+sed -i 's/\./_/g' tempdomain.txt
+DOMAIN_COM=$(cat tempdomain.txt)
+rm tempdomain.txt
+
+# PROMPT Ask for path to logs directory
+read -p "Path to logs for domain $i, eg. /var/www/yoursite.com/DockerLocal/logs: " CUR_LOGFOLDERPATH
+
+# Figure out php version
+read -p "Your PHP service - used to post process logrotate. ie: php7.2-fpm $cr" PHP_FPM
+if [ "$PHP_FPM" == '' ]; then
+    printf "You must specify a serivce for php, ie: php7.3-fpm or php7.2-fpm\n"
+    exit 1
+fi
+
+# REPLACE VARIABLES
+cp logrotate/TEMPLATE logrotate/TEMPLATE_CUSTOM
+sed -i'.bak' "s/PHP_FPM/${PHP_FPM}/g;" logrotate/TEMPLATE_CUSTOM
+rm logrotate/TEMPLATE_CUSTOM.bak
+CONF_CONTENTS=$(<logrotate/TEMPLATE_CUSTOM)
+
+# COPY 
+echo "$CONF_CONTENTS" >> "/etc/logrotate.d/$DOMAIN"
+
+# TEST
+sudo logrotate /etc/logrotate.conf --debug
