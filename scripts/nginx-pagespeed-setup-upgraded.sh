@@ -19,10 +19,10 @@ fastcgicache_global=$(<../config/nginx/fastcgicache_global)
 fastcgicache=$(<../config/nginx/fastcgicache)
 
 # Figure out global_nginx_conf
-cp ../config/nginx/global_nginx_conf ../config/ngingx/global_nginx_conf_custom
-sed -i'.bak' "s/WORKER_PROCESSES/${workerprocesses}/g;" ../config/ngingx/global_nginx_conf_custom
-sed -i'.bak' "s/WORKER_CONNECTIONS/${workerconnections}/g;" ../config/ngingx/global_nginx_conf_custom
-rm ../config/ngingx/global_nginx_conf_custom.bak
+cp ../config/nginx/global_nginx_conf ../config/nginx/global_nginx_conf_custom
+sed -i'.bak' "s/WORKER_PROCESSES/${workerprocesses}/g;" ../config/nginx/global_nginx_conf_custom
+sed -i'.bak' "s/WORKER_CONNECTIONS/${workerconnections}/g;" ../config/nginx/global_nginx_conf_custom
+rm ../config/nginx/global_nginx_conf_custom.bak
 
 global_nginx_conf=$(<../config/nginx/global_nginx_conf_custom)
 nginx_conf=$(<../config/nginx/nginx_conf)
