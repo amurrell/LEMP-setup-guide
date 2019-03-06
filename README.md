@@ -11,7 +11,7 @@ Recommended to ssh into your server with agent forwarding ie `ssh root@yourip -A
 ```
 sudo apt-get install wget
 wget https://raw.githubusercontent.com/amurrell/LEMP-setup-guide/master/install/install-upgraded
-sudo chmod +x install
+sudo chmod +x install-upgraded
 ./install-upgraded
 ```
 
