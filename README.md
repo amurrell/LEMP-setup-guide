@@ -10,7 +10,7 @@ Recommended to ssh into your server with agent forwarding ie `ssh root@yourip -A
 ### Ubuntu 18.04 LTS, Nginx 1.15.9, mod_pagespeed 1.13.35.2-stable, php 7.3, mariadb 10.3
 ```
 sudo apt-get install wget
-wget https://raw.githubusercontent.com/amurrell/LEMP-setup-guide/master/install/install
+wget https://raw.githubusercontent.com/amurrell/LEMP-setup-guide/master/install/install-upgraded
 sudo chmod +x install
 ./install-upgraded
 ```
