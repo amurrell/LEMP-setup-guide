@@ -40,7 +40,7 @@ sudo chmod +x install
 The following scripts are used "per site" that you want to setup on your server. They prompt and guide you through their functionality.
 
 - setup-site
-- setup-logrotate
+- setup-logrotate (needs logrotate command and syslog user)
 - install-cert
 
 ---
@@ -57,3 +57,5 @@ volumes:
 ```
 
 Change the branch to 18.04 to use that version of SimpleDocker.
+
+If testing with simple docker, you'll need to install `apt-get -y install rsyslog` and `apt-get -y install logrotate` to use setup-logrorate.

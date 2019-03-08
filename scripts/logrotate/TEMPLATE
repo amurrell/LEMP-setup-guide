@@ -1,4 +1,4 @@
-LOG_PATH*.log {
+LOG_PATH {
     daily
     missingok
     rotate 14

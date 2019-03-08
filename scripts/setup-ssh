@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+# PROMPT - SSH PUBLIC KEY (Authorized Keys)
+cr=`echo $'\n.'`
+cr=${cr%.}
+read -p "Your SSH public key...paste it $cr" SSHPUBKEY
+
+# Check if /var/www exists
+if [ ! -d "/root/.ssh/" ]; then  
+    printf "SSH folder does not seem to exist for this user. Going to create the folder now.\n"
+    cd ~/ && mkdir -p .ssh
+fi
+
+if [ ! "$SSHPUBKEY" == '' ]; then
+    echo "$SSHPUBKEY" > ~/.ssh/authorized_keys
+fi

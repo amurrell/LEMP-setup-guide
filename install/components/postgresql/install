@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+# Vars
+PG_RELEASE=$(lsb_release -cs)
+PG_CONF=$(find \ -name "postgresql.conf")
+PG_HBA_CONF=$(find \ -name "pg_hba.conf")
+
+# Update
+sudo apt update && sudo apt -y upgrade
+sudo apt install -y wget vim
+
+# Add Repo
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+echo "deb http://apt.postgresql.org/pub/repos/apt/ ${PG_RELEASE}"-pgdg main | sudo tee  /etc/apt/sources.list.d/pgdg.list
+sudo apt update
+sudo apt -y install postgresql-11
+
+# View port - shows localhost
+sudo ss -tunelp | grep 5432
+
+# Edit PG CONF to allow incoming connections
+if [ -f "$PG_CONF" ]; then
+  sed -i "/listen_addresses = 'localhost'/c\listen_addresses = '*'" $PG_CONF
+fi
+
+# Use pg_hba to further control those connections
+if [ -f "$PG_HBA_CONF" ]; then
+  echo $(<pg_hba.conf) >> PG_HBA_CONF
+fi
+
+sudo systemctl restart postgresql

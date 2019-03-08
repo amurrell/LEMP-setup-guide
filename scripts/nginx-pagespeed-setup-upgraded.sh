@@ -27,7 +27,7 @@ rm ../config/nginx/global_nginx_conf_custom.bak
 global_nginx_conf=$(<../config/nginx/global_nginx_conf_custom)
 nginx_conf=$(<../config/nginx/nginx_conf)
 mod_pagespeed=$(<../config/nginx/mod_pagespeed)
-mod_pagespeed=$(<../config/nginx/cache)
+cache=$(<../config/nginx/cache)
 gzipconf=$(<../config/nginx/gzip_conf)
 
 #Auto security update rules
@@ -159,7 +159,7 @@ echo "$fastcgicache" > /etc/nginx/conf/fastcgicache.conf
 
 # Mariadb
 sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
-sudo add-apt-repository 'deb [arch=amd64,i386] http://mirror.zol.co.zw/mariadb/repo/10.3/ubuntu bionic main'
+sudo add-apt-repository 'deb [arch=amd64] http://mirror.zol.co.zw/mariadb/repo/10.3/ubuntu bionic main'
 sudo apt-get update
 sudo apt update
 sudo apt-get install -y dialog apt-utils
@@ -230,23 +230,3 @@ sed -i "s=include /etc/nginx/sites=include /etc/nginx/sites-enabled=g;" nginx.co
 mkdir -p /etc/nginx/sites-available/
 mkdir -p /etc/nginx/sites-enabled/
 mv /etc/nginx/sites/* /etc/nginx/sites-available/
-
-# PROMPT - SSH PUBLIC KEY (Authorized Keys)
-cr=`echo $'\n.'`
-cr=${cr%.}
-read -p "Your SSH public key...paste it $cr" SSHPUBKEY
-
-# Check if /var/www exists
-if [ ! -d "/root/.ssh/" ]; then  
-    printf "SSH folder does not seem to exist for this user. Going to create the folder now.\n"
-    cd ~/ && mkdir -p .ssh
-fi
-
-if [ ! "$SSHPUBKEY" == '' ]; then
-    echo "$SSHPUBKEY" > ~/.ssh/authorized_keys
-fi
-
-# Prompt Site Setup
-cd /var/www/LEMP-setup-guide/scripts
-./setup-site
-

@@ -35,7 +35,7 @@ DOMAIN_COM=$(cat tempdomain.txt)
 rm tempdomain.txt
 
 # PROMPT Ask for path to logs directory
-read -p "Path to logs for domain $i, eg. /var/www/yoursite.com/DockerLocal/logs: " CUR_LOGFOLDERPATH
+read -p "Path to logs for domain $i, eg. /var/www/yoursite.com/DockerLocal/logs/*.log: " CUR_LOGFOLDERPATH
 
 # Figure out php version
 read -p "Your PHP service - used to post process logrotate. ie: php7.2-fpm $cr" PHP_FPM
@@ -47,8 +47,10 @@ fi
 # REPLACE VARIABLES
 cp logrotate/TEMPLATE logrotate/TEMPLATE_CUSTOM
 sed -i'.bak' "s/PHP_FPM/${PHP_FPM}/g;" logrotate/TEMPLATE_CUSTOM
+sed -i'.bak' "s~LOG_PATH~${CUR_LOGFOLDERPATH}~g;" logrotate/TEMPLATE_CUSTOM
 rm logrotate/TEMPLATE_CUSTOM.bak
 CONF_CONTENTS=$(<logrotate/TEMPLATE_CUSTOM)
+rm logrotate/TEMPLATE_CUSTOM
 
 # COPY 
 echo "$CONF_CONTENTS" >> "/etc/logrotate.d/$DOMAIN"
