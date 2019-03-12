@@ -60,7 +60,7 @@ sudo apt-get install -y software-properties-common
 sudo apt-get install -y uuid-dev
 
 # Avoid php packaging prompts - setting a timezone
-export DEBIAN_FRONTEND=noninteractive
+export DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
 apt-get install -y tzdata
 # ln -fs /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
 dpkg-reconfigure --frontend noninteractive tzdata
