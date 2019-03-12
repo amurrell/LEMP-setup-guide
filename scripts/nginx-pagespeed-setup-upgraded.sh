@@ -44,7 +44,27 @@ rotaterules=$(<../config/security/rotate_rules)
 ##################################################################
 
 sudo apt-get update
+
+### 18.04 AMI has grub issue
+### Workaround: Pre-update /etc/default/grub and
+### remove /boot/grub/menu.lst to avoid 'file changed' 
+### prompts from blocking completion of unattended update process
+patch /etc/default/grub <<'EOF'
+10c10
+< GRUB_CMDLINE_LINUX_DEFAULT="console=tty1 console=ttyS0"
+---
+> GRUB_CMDLINE_LINUX_DEFAULT="console=tty1 console=ttyS0 nvme.io_timeout=4294967295"
+19c19
+< GRUB_TERMINAL=console
+---
+> #GRUB_TERMINAL=console
+EOF
+rm /boot/grub/menu.lst
+
 sudo apt-get -y upgrade
+
+### Workaround part 2: re-generate /boot/grub/menu.lst
+/usr/sbin/update-grub-legacy-ec2 -y
 
 # Dependencies etc
 sudo apt-get install -y wget
