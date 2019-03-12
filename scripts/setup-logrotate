@@ -56,4 +56,4 @@ rm logrotate/TEMPLATE_CUSTOM
 echo "$CONF_CONTENTS" >> "/etc/logrotate.d/$DOMAIN"
 
 # TEST
-sudo logrotate /etc/logrotate.conf --debug
+# sudo logrotate /etc/logrotate.conf --debug
