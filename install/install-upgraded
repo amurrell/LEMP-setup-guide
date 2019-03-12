@@ -14,9 +14,9 @@ sudo apt-get install -y git
 # echo    # (optional) move to a new line
 # if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     # printf "Make sure to use https:// git url to install repos until you have your ssh key forwarded"
-    # THIS_REPO=https://github.com/amurrell/LEMP-setup-guide.git
+    THIS_REPO=https://github.com/amurrell/LEMP-setup-guide.git
 # else
-    THIS_REPO=git@github.com:amurrell/LEMP-setup-guide.git
+    # THIS_REPO=git@github.com:amurrell/LEMP-setup-guide.git
 # fi
 
 cd /var/www/
