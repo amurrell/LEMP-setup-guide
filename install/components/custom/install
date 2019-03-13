@@ -5,6 +5,8 @@ WHERE=$(pwd)
 
 WHERE="$WHERE/scripts/*.sh"
 
+chmod +x "$WHERE"
+
 for f in $WHERE; do  # or wget-*.sh instead of *.sh
   bash "$f" -H  || break # if needed 
 done
