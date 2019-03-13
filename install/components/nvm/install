@@ -7,3 +7,9 @@ source ~/.bashrc
 command -v nvm
 
 # usage: nvm install 6.4.1
+
+cat /var/www/LEMP-setup-guide/install/components/nvm/shell-envs > ~/.bashrc
+
+. ~/.nvm/nvm.sh
+. ~/.profile
+. ~/.bashrc
