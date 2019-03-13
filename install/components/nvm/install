@@ -6,10 +6,12 @@ source ~/.bashrc
 
 command -v nvm
 
-# usage: nvm install 6.4.1
+nvm install 10.14.2
 
-cat /var/www/LEMP-setup-guide/install/components/nvm/shell-envs > ~/.bashrc
+cat /var/www/LEMP-setup-guide/install/components/nvm/shell-envs > ~/.bash_profile
 
-. ~/.nvm/nvm.sh
-. ~/.profile
-. ~/.bashrc
+source ~/.bash_profile
+
+# . ~/.nvm/nvm.sh
+# . ~/.profile
+# . ~/.bashrc
