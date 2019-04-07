@@ -67,7 +67,7 @@ apt-get install -y tzdata
 # ln -fs /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
 dpkg-reconfigure --frontend noninteractive tzdata
 
-sudo apt-get -y upgrade
+# sudo apt-get -y upgrade
 
 ### Workaround part 2: re-generate /boot/grub/menu.lst
 # /usr/sbin/update-grub-legacy-ec2 -y
