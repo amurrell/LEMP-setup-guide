@@ -61,6 +61,12 @@ patch /etc/default/grub <<'EOF'
 EOF
 rm /boot/grub/menu.lst
 
+# Avoid php packaging prompts - setting a timezone
+export DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install grub-pc
+apt-get install -y tzdata
+# ln -fs /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
+dpkg-reconfigure --frontend noninteractive tzdata
+
 sudo apt-get -y upgrade
 
 ### Workaround part 2: re-generate /boot/grub/menu.lst
@@ -78,12 +84,6 @@ sudo apt-get install -y libpcre3-dev
 sudo apt-get install -y unzip
 sudo apt-get install -y software-properties-common
 sudo apt-get install -y uuid-dev
-
-# Avoid php packaging prompts - setting a timezone
-export DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
-apt-get install -y tzdata
-# ln -fs /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
-dpkg-reconfigure --frontend noninteractive tzdata
 
 # Pagespeed download
 NPS_VERSION=1.13.35.2-stable
