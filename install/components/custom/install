@@ -3,9 +3,9 @@
 # run any other files that get put in this same folder.
 WHERE=$(pwd)
 
-WHERE="$WHERE/scripts/*.sh"
+chmod +x "$WHERE/scripts"
 
-chmod +x "$WHERE"
+WHERE="$WHERE/scripts/*.sh"
 
 for f in $WHERE; do  # or wget-*.sh instead of *.sh
   bash "$f" -H  || break # if needed 
