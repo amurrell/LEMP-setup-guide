@@ -187,7 +187,7 @@ sudo debconf-set-selections <<< 'mariadb-server-10.3 mysql-server/root_password 
 sudo debconf-set-selections <<< 'mariadb-server-10.3 mysql-server/root_password_again password PASS'
 sudo apt-get install -y mariadb-server > /dev/null
 sudo service mysql start
-mysql -uroot -pPASS -e "SET PASSWORD = PASSWORD('password');"
+mysql -uroot -pPASS -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"
 
 # PHP
 LC_ALL=C.UTF-8 sudo add-apt-repository -y ppa:ondrej/php
