@@ -49,17 +49,17 @@ sudo apt-get update
 ### Workaround: Pre-update /etc/default/grub and
 ### remove /boot/grub/menu.lst to avoid 'file changed' 
 ### prompts from blocking completion of unattended update process
-patch /etc/default/grub <<'EOF'
-10c10
-< GRUB_CMDLINE_LINUX_DEFAULT="console=tty1 console=ttyS0"
----
-> GRUB_CMDLINE_LINUX_DEFAULT="console=tty1 console=ttyS0 nvme.io_timeout=4294967295"
-19c19
-< GRUB_TERMINAL=console
----
-> #GRUB_TERMINAL=console
-EOF
-rm /boot/grub/menu.lst
+# patch /etc/default/grub <<'EOF'
+# 10c10
+# < GRUB_CMDLINE_LINUX_DEFAULT="console=tty1 console=ttyS0"
+# ---
+# > GRUB_CMDLINE_LINUX_DEFAULT="console=tty1 console=ttyS0 nvme.io_timeout=4294967295"
+# 19c19
+# < GRUB_TERMINAL=console
+# ---
+# > #GRUB_TERMINAL=console
+# EOF
+# rm /boot/grub/menu.lst
 
 # Avoid php packaging prompts - setting a timezone
 export DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install grub-pc
@@ -70,7 +70,7 @@ dpkg-reconfigure --frontend noninteractive tzdata
 sudo apt-get -y upgrade
 
 ### Workaround part 2: re-generate /boot/grub/menu.lst
-/usr/sbin/update-grub-legacy-ec2 -y
+# /usr/sbin/update-grub-legacy-ec2 -y
 
 # Dependencies etc
 sudo apt-get install -y wget
