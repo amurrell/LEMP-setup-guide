@@ -7,5 +7,3 @@ wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | 
 . ~/.bashrc
 
 command -v nvm
-
-nvm install 10.14.2

@@ -11,38 +11,44 @@ pagespeed EnableFilters add_head;
 # pagespeed EnableFilters inline_css;
 # pagespeed EnableFilters inline_google_font_css;
 # pagespeed EnableFilters prioritize_critical_css;
-pagespeed CssInlineMaxBytes 25600;
-pagespeed JsInlineMaxBytes 8192;
+
+#pagespeed CssInlineMaxBytes 25600;
+#pagespeed JsInlineMaxBytes 8192;
 pagespeed ImageRecompressionQuality 75;
 pagespeed JpegRecompressionQualityForSmallScreens 65;
+
 # pagespeed EnableFilters rewrite_javascript;
 # pagespeed EnableFilters rewrite_javascript_external;
 # pagespeed EnableFilters rewrite_javascript_inline;
 # pagespeed EnableFilters combine_javascript;
 # pagespeed EnableFilters canonicalize_javascript_libraries;
 # pagespeed EnableFilters inline_javascript;
-# pagespeed EnableFilters defer_javascript;
+#pagespeed EnableFilters defer_javascript;
 pagespeed EnableFilters dedup_inlined_images;
-# pagespeed EnableFilters lazyload_images;
-pagespeed EnableFilters local_storage_cache;
+pagespeed EnableFilters lazyload_images;
+
+#pagespeed EnableFilters local_storage_cache;
 pagespeed EnableFilters rewrite_images;
-pagespeed EnableFilters convert_jpeg_to_progressive;
-pagespeed EnableFilters convert_png_to_jpeg;
-pagespeed EnableFilters convert_jpeg_to_webp;
-pagespeed EnableFilters convert_to_webp_lossless;
-pagespeed EnableFilters insert_image_dimensions;
+#pagespeed EnableFilters convert_jpeg_to_progressive;
+#pagespeed EnableFilters convert_png_to_jpeg;
+#pagespeed EnableFilters convert_jpeg_to_webp;
+#pagespeed EnableFilters convert_to_webp_lossless;
+#pagespeed EnableFilters insert_image_dimensions;
 pagespeed EnableFilters inline_images;
 pagespeed EnableFilters recompress_images;
 pagespeed EnableFilters recompress_jpeg;
 pagespeed EnableFilters recompress_png;
 pagespeed EnableFilters recompress_webp;
-pagespeed EnableFilters convert_gif_to_png;
+#pagespeed EnableFilters convert_gif_to_png;
 pagespeed EnableFilters strip_image_color_profile;
 pagespeed EnableFilters strip_image_meta_data;
 pagespeed EnableFilters resize_images;
 pagespeed EnableFilters resize_rendered_image_dimensions;
 pagespeed EnableFilters resize_mobile_images;
-pagespeed EnableFilters remove_comments;
+
+## CANNOT REMOVE COMMENTS FOR NUXT APP
+#pagespeed EnableFilters remove_comments;
+
 pagespeed EnableFilters collapse_whitespace;
 pagespeed EnableFilters elide_attributes;
 pagespeed EnableFilters extend_cache;
