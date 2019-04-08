@@ -6,7 +6,7 @@ PG_CONF=$(find \ -name "postgresql.conf")
 PG_HBA_CONF=$(find \ -name "pg_hba.conf")
 
 # Update
-sudo apt update && sudo apt -y upgrade
+sudo apt update
 sudo apt install -y wget vim
 
 # Add Repo
