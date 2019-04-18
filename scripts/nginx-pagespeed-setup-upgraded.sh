@@ -29,6 +29,7 @@ nginx_conf=$(<../config/nginx/nginx_conf)
 mod_pagespeed=$(<../config/nginx/mod_pagespeed)
 cache=$(<../config/nginx/cache)
 gzipconf=$(<../config/nginx/gzip_conf)
+log_format=$(<../config/nginx/log_format)
 
 #Auto security update rules
 updaterules=$(<../config/security/updates_rules)
@@ -173,6 +174,7 @@ echo "$global_nginx_conf" > /etc/nginx/nginx.conf;
 echo "$fastcgicache_global" > /etc/nginx/conf/fastcgicache_global.conf
 echo "$nginx_conf" > /etc/nginx/sites/default;
 echo "$mod_pagespeed" > /etc/nginx/conf/mod_pagespeed.conf;
+echo "$log_format" > /etc/nginx/conf/log_format.conf;
 echo "$cache" > /etc/nginx/conf/cache.conf;
 echo "$gzipconf" > /etc/nginx/conf/gzip.conf;
 echo "$fastcgicache" > /etc/nginx/conf/fastcgicache.conf
@@ -209,6 +211,7 @@ sudo apt-get update && \
 	sudo apt-get -y install php-memcached && \
 	sudo apt-get -y install php-pgsql && \
 	sudo apt-get -y install php-xml && \
+	sudo apt-get -y install php-intl && \
     sudo apt-get -y install php-gd
 
 # FastCGI microcaching

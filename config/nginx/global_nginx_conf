@@ -9,6 +9,8 @@ http {
     server_tokens off;
     sendfile        on;
     #tcp_nopush     on;
+    #log format
+    include /etc/nginx/conf/log_format.conf;
     # Gzip configuration
     include /etc/nginx/conf/gzip.conf;
     #PHP and FastCGI cache
@@ -20,6 +22,12 @@ http {
     client_header_buffer_size 2k;
     client_max_body_size 64m;
     large_client_header_buffers 4 32k;
+
+    # Proxy Buffers
+    proxy_buffer_size          128k;
+    proxy_buffers              4 256k;
+    proxy_busy_buffers_size    256k;
+
     # Timeouts
     client_body_timeout 12;
     client_header_timeout 12;
