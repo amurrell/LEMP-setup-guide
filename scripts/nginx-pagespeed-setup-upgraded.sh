@@ -212,6 +212,7 @@ sudo apt-get update && \
 	sudo apt-get -y install php-pgsql && \
 	sudo apt-get -y install php-xml && \
 	sudo apt-get -y install php-intl && \
+	sudo apt-get -y install php-redis && \
     sudo apt-get -y install php-gd
 
 # FastCGI microcaching

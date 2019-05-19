@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+# Vars
+REDIS_CONF=$(<redis.conf)
+REDIS_CONF_PATH='/etc/redis/redis.conf'
+
+# Update
+sudo apt update
+
+# Install
+sudo apt-get -y install redis-server
+
+# Enable
+sudo systemctl enable redis-server.service
+
+# Add the Config
+if [ -f "$REDIS_CONF_PATH" ]; then
+    # replace/create file
+    echo "$REDIS_CONF" >> "$REDIS_CONF_PATH"
+else
+    # append to file
+    echo "$REDIS_CONF" > "$REDIS_CONF_PATH"
+fi
+
+# Restart
+sudo systemctl restart redis-server.service
+
+# Add php redis
+sudo apt-get install php-redis
+
+# Test it with: redis-cli
+# Default host:port - 127.0.0.1:6379
