@@ -63,8 +63,9 @@ sudo apt-get update
 # rm /boot/grub/menu.lst
 
 # Avoid php packaging prompts - setting a timezone
-export DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install grub-pc
-export DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
+dpkg-reconfigure debconf --frontend=noninteractive
+DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install grub-pc
+DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
 # ln -fs /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
 dpkg-reconfigure --frontend noninteractive tzdata
 
@@ -74,17 +75,17 @@ dpkg-reconfigure --frontend noninteractive tzdata
 # /usr/sbin/update-grub-legacy-ec2 -y
 
 # Dependencies etc
-export DEBIAN_FRONTEND=noninteractive apt-get install -y wget
-export DEBIAN_FRONTEND=noninteractive apt-get install -y git
-export DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential
-export DEBIAN_FRONTEND=noninteractive apt-get install -y python
-export DEBIAN_FRONTEND=noninteractive apt-get install -y dpkg-dev
-export DEBIAN_FRONTEND=noninteractive apt-get install -y zlib1g-dev
-export DEBIAN_FRONTEND=noninteractive apt-get install -y libpcre3
-export DEBIAN_FRONTEND=noninteractive apt-get install -y libpcre3-dev
-export DEBIAN_FRONTEND=noninteractive apt-get install -y unzip
-export DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common
-export DEBIAN_FRONTEND=noninteractive apt-get install -y uuid-dev
+DEBIAN_FRONTEND=noninteractive apt-get install -y wget
+DEBIAN_FRONTEND=noninteractive apt-get install -y git
+DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential
+DEBIAN_FRONTEND=noninteractive apt-get install -y python
+DEBIAN_FRONTEND=noninteractive apt-get install -y dpkg-dev
+DEBIAN_FRONTEND=noninteractive apt-get install -y zlib1g-dev
+DEBIAN_FRONTEND=noninteractive apt-get install -y libpcre3
+DEBIAN_FRONTEND=noninteractive apt-get install -y libpcre3-dev
+DEBIAN_FRONTEND=noninteractive apt-get install -y unzip
+DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common
+DEBIAN_FRONTEND=noninteractive apt-get install -y uuid-dev
 
 # Pagespeed download
 NPS_VERSION=1.13.35.2-stable
@@ -199,6 +200,7 @@ sudo apt-get -y --no-install-recommends install php7.3-fpm
 sudo apt-get clean
 
 sudo update-alternatives --set php /usr/bin/php7.3
+service php7.3-fpm restart
 
 # PHP
 sudo apt-get update && \
@@ -215,8 +217,8 @@ sudo apt-get update && \
 	sudo apt-get -y install php-xml && \
 	sudo apt-get -y install php-intl && \
 	sudo apt-get -y install php-redis && \
-        sudo apt-get -y install php-bcmath && \
-    sudo apt-get -y install php-gd
+	sudo apt-get -y install php-bcmath && \
+	sudo apt-get -y install php-gd
 
 # FastCGI microcaching
 sed -i 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g' /etc/php/7.3/fpm/php.ini
