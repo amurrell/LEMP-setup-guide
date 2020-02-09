@@ -29,7 +29,7 @@ nginx_conf=$(<../config/nginx/nginx_conf)
 mod_pagespeed=$(<../config/nginx/mod_pagespeed)
 cache=$(<../config/nginx/cache)
 gzipconf=$(<../config/nginx/gzip_conf)
-log_format=$(<../config/nginx/log_format)
+log_format=$(<../config/nginx/log_format_conf)
 
 #Auto security update rules
 updaterules=$(<../config/security/updates_rules)
