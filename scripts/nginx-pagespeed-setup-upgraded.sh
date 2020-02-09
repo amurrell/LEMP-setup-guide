@@ -183,19 +183,19 @@ echo "$fastcgicache" > /etc/nginx/conf/fastcgicache.conf
 sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
 sudo add-apt-repository 'deb [arch=amd64] http://mirror.zol.co.zw/mariadb/repo/10.3/ubuntu bionic main'
 sudo apt-get update
-sudo apt update
-export DEBIAN_FRONTEND=noninteractive apt-get install -y dialog apt-utils
+sudo apt-get update
+sudo apt-get install -y dialog apt-utils
 sudo debconf-set-selections <<< 'mariadb-server-10.3 mysql-server/root_password password PASS'
 sudo debconf-set-selections <<< 'mariadb-server-10.3 mysql-server/root_password_again password PASS'
-export DEBIAN_FRONTEND=noninteractive apt-get install -y mariadb-server > /dev/null
+sudo apt-get install -y mariadb-server > /dev/null
 sudo service mysql start
 mysql -uroot -pPASS -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"
 
 # PHP
 LC_ALL=C.UTF-8 sudo add-apt-repository -y ppa:ondrej/php
 sudo apt-get update
-export DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install php7.3
-export DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install php7.3-fpm
+sudo apt-get -y --no-install-recommends install php7.3
+sudo apt-get -y --no-install-recommends install php7.3-fpm
 sudo apt-get clean
 
 # PHP
