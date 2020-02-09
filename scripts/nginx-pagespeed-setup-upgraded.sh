@@ -64,7 +64,7 @@ sudo apt-get update
 
 # Avoid php packaging prompts - setting a timezone
 export DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install grub-pc
-apt-get install -y tzdata
+export DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
 # ln -fs /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
 dpkg-reconfigure --frontend noninteractive tzdata
 
@@ -74,17 +74,17 @@ dpkg-reconfigure --frontend noninteractive tzdata
 # /usr/sbin/update-grub-legacy-ec2 -y
 
 # Dependencies etc
-sudo apt-get install -y wget
-sudo apt-get install -y git
-sudo apt-get install -y build-essential
-sudo apt-get install -y python
-sudo apt-get install -y dpkg-dev
-sudo apt-get install -y zlib1g-dev
-sudo apt-get install -y libpcre3
-sudo apt-get install -y libpcre3-dev
-sudo apt-get install -y unzip
-sudo apt-get install -y software-properties-common
-sudo apt-get install -y uuid-dev
+export DEBIAN_FRONTEND=noninteractive apt-get install -y wget
+export DEBIAN_FRONTEND=noninteractive apt-get install -y git
+export DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential
+export DEBIAN_FRONTEND=noninteractive apt-get install -y python
+export DEBIAN_FRONTEND=noninteractive apt-get install -y dpkg-dev
+export DEBIAN_FRONTEND=noninteractive apt-get install -y zlib1g-dev
+export DEBIAN_FRONTEND=noninteractive apt-get install -y libpcre3
+export DEBIAN_FRONTEND=noninteractive apt-get install -y libpcre3-dev
+export DEBIAN_FRONTEND=noninteractive apt-get install -y unzip
+export DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common
+export DEBIAN_FRONTEND=noninteractive apt-get install -y uuid-dev
 
 # Pagespeed download
 NPS_VERSION=1.13.35.2-stable
@@ -184,18 +184,18 @@ sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F2
 sudo add-apt-repository 'deb [arch=amd64] http://mirror.zol.co.zw/mariadb/repo/10.3/ubuntu bionic main'
 sudo apt-get update
 sudo apt update
-sudo apt-get install -y dialog apt-utils
+export DEBIAN_FRONTEND=noninteractive apt-get install -y dialog apt-utils
 sudo debconf-set-selections <<< 'mariadb-server-10.3 mysql-server/root_password password PASS'
 sudo debconf-set-selections <<< 'mariadb-server-10.3 mysql-server/root_password_again password PASS'
-sudo apt-get install -y mariadb-server > /dev/null
+export DEBIAN_FRONTEND=noninteractive apt-get install -y mariadb-server > /dev/null
 sudo service mysql start
 mysql -uroot -pPASS -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"
 
 # PHP
 LC_ALL=C.UTF-8 sudo add-apt-repository -y ppa:ondrej/php
 sudo apt-get update
-sudo apt-get -y --no-install-recommends install php7.3
-sudo apt-get -y --no-install-recommends install php7.3-fpm
+export DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install php7.3
+export DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install php7.3-fpm
 sudo apt-get clean
 
 # PHP
