@@ -204,21 +204,21 @@ service php7.3-fpm restart
 
 # PHP
 sudo apt-get update && \
-	sudo apt-get install -y php-curl && \
-	sudo apt-get install -y php-mysql && \
+	sudo apt-get install -y php7.3-curl && \
+	sudo apt-get install -y php7.3-mysql && \
 	sudo apt-get -y install php-pear && \
-	sudo apt-get -y install php-dev && \
+	sudo apt-get -y install php7.3-dev && \
 	sudo apt-get -y install libcurl3-openssl-dev && \
 	sudo apt-get -y install libyaml-dev && \
-	sudo apt-get -y install php-zip && \
-	sudo apt-get -y install php-mbstring && \
-	sudo apt-get -y install php-memcached && \
-	sudo apt-get -y install php-pgsql && \
-	sudo apt-get -y install php-xml && \
-	sudo apt-get -y install php-intl && \
-	sudo apt-get -y install php-redis && \
-	sudo apt-get -y install php-bcmath && \
-	sudo apt-get -y install php-gd
+	sudo apt-get -y install php7.3-zip && \
+	sudo apt-get -y install php7.3-mbstring && \
+	sudo apt-get -y install php7.3-memcached && \
+	sudo apt-get -y install php7.3-pgsql && \
+	sudo apt-get -y install php7.3-xml && \
+	sudo apt-get -y install php7.3-intl && \
+	sudo apt-get -y install php7.3-redis && \
+	sudo apt-get -y install php7.3-bcmath && \
+	sudo apt-get -y install php7.3-gd
 
 # FastCGI microcaching
 sed -i 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g' /etc/php/7.3/fpm/php.ini
