@@ -68,9 +68,6 @@ else
     printf "Without a github repo or ssh setup, you are responsible for putting your files into /var/www/$DOMAIN\n" 
 fi
 
-mkdir -p "/var/www/$DOMAIN/DockerLocal/logs"
-mkdir -p "/var/www/$DOMAIN/logs"
-
 # NGINX - Vueapp or PHP?
 read -p "Do you need to setup nginx with upstreams and php?" -n 1 -r
 echo    # (optional) move to a new line
@@ -106,9 +103,9 @@ then
 fi
 
 # Create php site config
-mkdir -p /etc/php/7.3/fpm/pool.d/
-cp /var/www/LEMP-setup-guide/config/site.php-fpm.conf /etc/php/7.3/fpm/pool.d/"$DOMAIN.conf"
-cd /etc/php/7.3/fpm/pool.d/
+mkdir -p /etc/php/7.2/fpm/pool.d/
+cp /var/www/LEMP-setup-guide/config/site.php-fpm.conf /etc/php/7.2/fpm/pool.d/"$DOMAIN.conf"
+cd /etc/php/7.2/fpm/pool.d/
 sed -i "s/SITEDOTCOM/${DOMAIN}/g;" "$DOMAIN.conf"
 sed -i "s/SITE_COM/${DOMAIN_COM}/g;" "$DOMAIN.conf"
 
@@ -137,10 +134,10 @@ then
     sed -i "s/DATABASEPORT/${DATABASE_PORT}/g;" "$DOMAIN.conf"
 
     # test php
-    sudo php-fpm7.3 -t
+    sudo php-fpm7.2 -t
 
     # restart php
-    sudo service php7.3-fpm reload
+    sudo service php7.2-fpm reload
 
     read -p "Do you want to setup a local mysql database using the info for php env vars above? " -n 1 -r
     echo    # (optional) move to a new line
