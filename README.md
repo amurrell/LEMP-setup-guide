@@ -35,13 +35,32 @@ sudo chmod +x install
 
 ---
 
-## Other Scripts
+## Other Scripts & Components
+
+### Scripts
 
 The following scripts are used "per site" that you want to setup on your server. They prompt and guide you through their functionality.
 
-- setup-site
-- setup-logrotate (needs logrotate command and syslog user)
-- install-cert
+- **setup-site** - sets up a site based on git repo, creates nginx / php as needed
+- **setup-logrotate** (needs logrotate command and syslog user)
+- **install-cert** - sets up certbot for ssl on your site, with option to update nginx or not - creates a cronjob to keep fetching. ideal if you want control over how certbot affects nginx conf files.
+
+### Installable Components
+There are also **components** in the `install` folder, which allow you to install other specific common tools, as well as your own custom scripts. 
+
+- composer
+- pm2
+- nvm
+- redis
+- postgressql
+- custom
+
+### Custom Scripts
+
+The custom scripts have a `install` file that will loop through scripts in the `scripts` folder. You can name these with numbers to create an order of when they will run. 
+
+- **install** -  (running this will loop through scripts in `/scripts`
+- **/scripts** - Add bash scripts here, make sure to `chmod +x` them. eg. `000-running-custom-scripts.sh`
 
 ---
 
