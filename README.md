@@ -1,21 +1,32 @@
 # LEMP-setup-guide
-Scripts &amp; Guide for LEMP stack with Pagespeed and http2 modules - on ubuntu 18.04 or 16.04.4
+Scripts &amp; Guide for LEMP stack with Pagespeed and http2 modules - on ubuntu 18.04LTS or 20.04LTS
 
-Also includes scripts for setting up a site with php streams/database or via proxy, logrotate, certbot (with cron, but won't interfere with nginx from source).
+- mariadb - 10.3
+- nginx - 1.20.0
+- openssl (20.04) - 1.1.1k
+- pagespeed-version - 1.13.35.2-stable
+- php-version - 7.4
 
-## Start using the scripts
+If you want to **override** these: 
+
+Go to folder `config/versions` and add new files with override prepended eg. `override-php-version` and use [this setup guide](#setup-guide-with-overrides).
+
+---
+
+## Quick start
+
+This method accepts the default versions. [Read the setup guide for using overrides here](#setup-guide-with-overrides).
+
+### SSH into your server:
+
+This is where you want to setup the environment.
 
 Recommended to ssh into your server with agent forwarding ie `ssh root@yourip -A`
 
-### Ubuntu 18.04 LTS or 20.04 LTS, Nginx 1.15.9, mod_pagespeed 1.13.35.2-stable, php 7.3, mariadb 10.3
-```
-sudo apt-get install wget
-wget https://raw.githubusercontent.com/amurrell/LEMP-setup-guide/master/install/install-upgraded
-sudo chmod +x install-upgraded
-./install-upgraded
-```
+### CD & Paste:
 
-### Ubuntu 16.04 LTS, Nginx 1.10.1, mod_pagespeed 1.11.33.2, php 7.2, mariadb 10.3
+`cd /var/www/`, or where you want your websites to live.
+
 ```
 sudo apt-get install wget
 wget https://raw.githubusercontent.com/amurrell/LEMP-setup-guide/master/install/install
@@ -23,6 +34,48 @@ sudo chmod +x install
 ./install
 ```
 
+Jump down to: [During & After The Script](#during--after-the-script)
+
+---
+
+## Setup Guide With Overrides
+
+### SSH & cd into preferred folder
+
+First, `ssh` into your server and navigate to your website installation location, eg. `cd /var/www/`. 
+
+Recommended to ssh into your server with agent forwarding ie `ssh root@yourip -A`
+
+### Clone the repo
+
+```
+git clone https://github.com/amurrell/LEMP-setup-guide.git
+```
+
+### Update your versions
+
+```
+cd LEMP-setup-guide/config/versions
+
+# see the services
+ls
+
+# look at one of them
+cat php-version
+
+# create override file
+echo "8.0" > override-php-version
+```
+
+### Run the install script
+
+After you're done overriding versions, you can install!
+
+```
+cd scripts
+chmod +x server-initial-setup.sh
+./server-initial-setup.sh
+```
 ---
 
 ### During & After The Script

@@ -4,11 +4,15 @@
 #    from: https://github.com/actuallymentor/Setup-Script-Nginx-Pagespeed-PHP7-Mariadb
 #    by:   @actuallymentor, github
 #
-# This upgraded version uses:
+# This install script uses the following version defaults:
 #
+#  NOTE: override these versions in the config/versions folder 
+#        by adding files with override prepended eg "override-php-version"
+#
+# - openssl: 1.1.1k
 # - pagespeed: 1.13.35.2-stable
-# - nginx: 1.15.9
-# - php: 7.3
+# - nginx: 1.20.0
+# - php: 7.4
 # - mariadb: 10.3
 #
 
@@ -24,12 +28,42 @@ sed -i'.bak' "s/WORKER_PROCESSES/${workerprocesses}/g;" ../config/nginx/global_n
 sed -i'.bak' "s/WORKER_CONNECTIONS/${workerconnections}/g;" ../config/nginx/global_nginx_conf_custom
 rm ../config/nginx/global_nginx_conf_custom.bak
 
+# Versions
+PHP_VERSION=$(<../config/versions/php-version)
+NGINX_VERSION=$(<../config/versions/nginx-version)
+PAGESPEED_VERSION=$(<../config/versions/pagespeed-version)
+OPENSSL_VERSION=$(<../config/versions/openssl-version)
+MARIADB_VERSION=$(<../config/versions/mariadb-version)
+
+# Version overrides
+if [ -f ../config/php-version ] && [ ! -z $(<../config/versions/override-php-version) ]; then
+	PHP_VERSION=$(<../config/versions/override-php-version)
+fi
+
+if [ -f ../config/nginx-version ] && [ ! -z $(<../config/versions/override-nginx-version) ]; then
+	NGINX_VERSION=$(<../config/versions/override-nginx-version)
+fi
+
+if [ -f ../config/nginx-version ] && [ ! -z $(<../config/versions/override-pagespeed-version) ]; then
+	PAGESPEED_VERSION=$(<../config/versions/override-pagespeed-version)
+fi
+
+if [ -f ../config/nginx-version ] && [ ! -z $(<../config/versions/override-openssl-version) ]; then
+	OPENSSL_VERSION=$(<../config/versions/override-openssl-version)
+fi
+
+if [ -f ../config/nginx-version ] && [ ! -z $(<../config/versions/override-mariadb-version) ]; then
+	MARIADB_VERSION=$(<../config/versions/override-mariadb-version)
+fi
+
+# Nginx configurations
 global_nginx_conf=$(<../config/nginx/global_nginx_conf_custom)
 nginx_conf=$(<../config/nginx/nginx_conf)
 mod_pagespeed=$(<../config/nginx/mod_pagespeed)
 cache=$(<../config/nginx/cache)
 gzipconf=$(<../config/nginx/gzip_conf)
 log_format=$(<../config/nginx/log_format_conf)
+
 
 #Auto security update rules
 updaterules=$(<../config/security/updates_rules)
@@ -102,7 +136,7 @@ wget ${psol_url}
 tar -xzvf $(basename ${psol_url})  # extracts to psol/
 
 # Openssl Download
-OPENSSL_VERSION='1.0.1s'
+OPENSSL_VERSION='1.1.1f'
 wget -qO - https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz | tar xzf  - -C /tmp
 cd
 
@@ -195,39 +229,39 @@ mysql -uroot -pPASS -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"
 # PHP
 LC_ALL=C.UTF-8 sudo add-apt-repository -y ppa:ondrej/php
 sudo apt-get update
-sudo apt-get -y --no-install-recommends install php7.3
-sudo apt-get -y --no-install-recommends install php7.3-fpm
+sudo apt-get -y --no-install-recommends install php${PHP_VERSION}
+sudo apt-get -y --no-install-recommends install php${PHP_VERSION}-fpm
 sudo apt-get clean
 
-sudo update-alternatives --set php /usr/bin/php7.3
-service php7.3-fpm restart
+sudo update-alternatives --set php /usr/bin/php${PHP_VERSION}
+service php${PHP_VERSION}-fpm restart
 
 # PHP
 sudo apt-get update && \
-	sudo apt-get install -y php7.3-curl && \
-	sudo apt-get install -y php7.3-mysql && \
+	sudo apt-get install -y php${PHP_VERSION}-curl && \
+	sudo apt-get install -y php${PHP_VERSION}-mysql && \
 	sudo apt-get -y install php-pear && \
-	sudo apt-get -y install php7.3-dev && \
+	sudo apt-get -y install php${PHP_VERSION}-dev && \
 	sudo apt-get -y install libcurl3-openssl-dev && \
 	sudo apt-get -y install libyaml-dev && \
-	sudo apt-get -y install php7.3-zip && \
-	sudo apt-get -y install php7.3-mbstring && \
-	sudo apt-get -y install php7.3-memcached && \
-	sudo apt-get -y install php7.3-pgsql && \
-	sudo apt-get -y install php7.3-xml && \
-	sudo apt-get -y install php7.3-intl && \
-	sudo apt-get -y install php7.3-redis && \
-	sudo apt-get -y install php7.3-bcmath && \
-	sudo apt-get -y install php7.3-gd
+	sudo apt-get -y install php${PHP_VERSION}-zip && \
+	sudo apt-get -y install php${PHP_VERSION}-mbstring && \
+	sudo apt-get -y install php${PHP_VERSION}-memcached && \
+	sudo apt-get -y install php${PHP_VERSION}-pgsql && \
+	sudo apt-get -y install php${PHP_VERSION}-xml && \
+	sudo apt-get -y install php${PHP_VERSION}-intl && \
+	sudo apt-get -y install php${PHP_VERSION}-redis && \
+	sudo apt-get -y install php${PHP_VERSION}-bcmath && \
+	sudo apt-get -y install php${PHP_VERSION}-gd
 
 # FastCGI microcaching
-sed -i 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g' /etc/php/7.3/fpm/php.ini
-sed -i "s/^;listen.owner = www-data/listen.owner = www-data/g" /etc/php/7.3/fpm/pool.d/www.conf
-sed -i "s/^;listen.group = www-data/listen.group = www-data/g" /etc/php/7.3/fpm/pool.d/www.conf
-sed -i "s/^;listen.mode = 0660/listen.mode = 0660/" /etc/php/7.3/fpm/pool.d/www.conf
+sed -i 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g' /etc/php/${PHP_VERSION}/fpm/php.ini
+sed -i "s/^;listen.owner = www-data/listen.owner = www-data/g" /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf
+sed -i "s/^;listen.group = www-data/listen.group = www-data/g" /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf
+sed -i "s/^;listen.mode = 0660/listen.mode = 0660/" /etc/php/${PHP_VERSION}/fpm/pool.d/www.conf
 mkdir -p /var/nginx_cache
 
-# mcrypt for 7.3 is a pecl extension, so i got rid of it for now.
+# note: mcrypt for 7.3 is a pecl extension, so i got rid of it for now.
 
 # adminer and sendy modules
 phpenmod mbstring
@@ -236,7 +270,7 @@ phpenmod xml
 phpenmod xmlreader
 phpenmod simplexml
 phpenmod gd
-service php7.3-fpm restart
+service php${PHP_VERSION}-fpm restart
 
 # auto security updates
 touch /etc/cron.daily/apt-security-updates

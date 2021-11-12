@@ -10,14 +10,7 @@ fi
 printf "Installing git...\n"
 sudo apt-get install -y git
 
-read -p "Did you forward your ssh agent so you can git clone with ssh (git@github.com)? " -n 1 -r
-echo    # (optional) move to a new line
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    printf "Make sure to use https:// git url to install repos until you have your ssh key forwarded"
-    THIS_REPO=https://github.com/amurrell/LEMP-setup-guide.git
-else
-    THIS_REPO=git@github.com:amurrell/LEMP-setup-guide.git
-fi
+THIS_REPO=https://github.com/amurrell/LEMP-setup-guide.git
 
 cd /var/www/
 
@@ -28,4 +21,4 @@ fi
 
 cd LEMP-setup-guide/scripts
 
-./nginx-pagespeed-setup.sh
+./server-initial-setup.sh

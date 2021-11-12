@@ -36,4 +36,8 @@ http {
     send_timeout 10;
     # Log off
     access_log off;
+
+    # SSL TLS versions
+    ssl_protocols TLSv1.1 TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
 }
