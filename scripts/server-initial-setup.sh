@@ -34,6 +34,7 @@ NGINX_VERSION=$(<../config/versions/nginx-version)
 PAGESPEED_VERSION=$(<../config/versions/pagespeed-version)
 OPENSSL_VERSION=$(<../config/versions/openssl-version)
 MARIADB_VERSION=$(<../config/versions/mariadb-version)
+UBUNTU_RELEASE_NAME=$(<../config/versions/ubuntu-release-name)
 
 # Version overrides
 if [ -f ../config/php-version ] && [ ! -z $(<../config/versions/override-php-version) ]; then
@@ -54,6 +55,10 @@ fi
 
 if [ -f ../config/nginx-version ] && [ ! -z $(<../config/versions/override-mariadb-version) ]; then
 	MARIADB_VERSION=$(<../config/versions/override-mariadb-version)
+fi
+
+if [ -f ../config/ubuntu-release-name ] && [ ! -z $(<../config/versions/override-ubuntu-release-name) ]; then
+	UBUNTU_RELEASE_NAME=$(<../config/versions/override-ubuntu-release-name)
 fi
 
 # Nginx configurations
@@ -122,27 +127,24 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common
 DEBIAN_FRONTEND=noninteractive apt-get install -y uuid-dev
 
 # Pagespeed download
-NPS_VERSION=1.13.35.2-stable
 cd
-wget https://github.com/apache/incubator-pagespeed-ngx/archive/v${NPS_VERSION}.zip
-unzip v${NPS_VERSION}.zip
-nps_dir=$(find . -name "*pagespeed-ngx-${NPS_VERSION}" -type d)
+wget https://github.com/apache/incubator-pagespeed-ngx/archive/v${PAGESPEED_VERSION}.zip
+unzip v${PAGESPEED_VERSION}.zip
+nps_dir=$(find . -name "*pagespeed-ngx-${PAGESPEED_VERSION}" -type d)
 cd "$nps_dir"
-NPS_RELEASE_NUMBER=${NPS_VERSION/beta/}
-NPS_RELEASE_NUMBER=${NPS_VERSION/stable/}
+NPS_RELEASE_NUMBER=${PAGESPEED_VERSION/beta/}
+NPS_RELEASE_NUMBER=${PAGESPEED_VERSION/stable/}
 psol_url=https://dl.google.com/dl/page-speed/psol/${NPS_RELEASE_NUMBER}.tar.gz
 [ -e scripts/format_binary_url.sh ] && psol_url=$(scripts/format_binary_url.sh PSOL_BINARY_URL)
 wget ${psol_url}
 tar -xzvf $(basename ${psol_url})  # extracts to psol/
 
 # Openssl Download
-OPENSSL_VERSION='1.1.1f'
 wget -qO - https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz | tar xzf  - -C /tmp
 cd
 
 # Nginx Download
 mkdir -p /etc/nginx
-NGINX_VERSION=1.15.9
 cd
 wget http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz
 tar -xvzf nginx-${NGINX_VERSION}.tar.gz
@@ -215,13 +217,14 @@ echo "$gzipconf" > /etc/nginx/conf/gzip.conf;
 echo "$fastcgicache" > /etc/nginx/conf/fastcgicache.conf
 
 # Mariadb
-sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
-sudo add-apt-repository 'deb [arch=amd64] http://mirror.zol.co.zw/mariadb/repo/10.3/ubuntu bionic main'
+# sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
+sudo apt-key adv --fetch-keys 'https://mariadb.org/mariadb_release_signing_key.asc'
+sudo add-apt-repository "deb [arch=amd64,arm64,ppc64el] http://mirror.zol.co.zw/mariadb/repo/${MARIADB_VERSION}/ubuntu ${UBUNTU_RELEASE_NAME} main"
 sudo apt-get update
 sudo apt update
 sudo apt-get install -y dialog apt-utils
-sudo debconf-set-selections <<< 'mariadb-server-10.3 mysql-server/root_password password PASS'
-sudo debconf-set-selections <<< 'mariadb-server-10.3 mysql-server/root_password_again password PASS'
+sudo debconf-set-selections <<< "mariadb-server-${MARIADB_VERSION} mysql-server/root_password password PASS"
+sudo debconf-set-selections <<< "mariadb-server-${MARIADB_VERSION} mysql-server/root_password_again password PASS"
 sudo apt-get install -y mariadb-server > /dev/null
 sudo service mysql start
 mysql -uroot -pPASS -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"

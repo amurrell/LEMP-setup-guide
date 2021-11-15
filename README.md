@@ -1,11 +1,12 @@
 # LEMP-setup-guide
 Scripts &amp; Guide for LEMP stack with Pagespeed and http2 modules - on ubuntu 18.04LTS or 20.04LTS
 
-- mariadb - 10.3
+- mariadb - 10.6
 - nginx - 1.20.0
 - openssl (20.04) - 1.1.1k
 - pagespeed-version - 1.13.35.2-stable
 - php-version - 7.4
+- ubuntu 20.04 (focal)
 
 If you want to **override** these: 
 
@@ -66,6 +67,8 @@ cat php-version
 # create override file
 echo "8.0" > override-php-version
 ```
+
+**Note:** 18.04 LTS Ubuntu, use "bionic" in override-ubuntu-release-name
 
 ### Run the install script
 
