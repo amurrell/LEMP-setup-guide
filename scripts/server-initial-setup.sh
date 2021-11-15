@@ -13,7 +13,7 @@
 # - pagespeed: 1.13.35.2-stable
 # - nginx: 1.20.0
 # - php: 7.4
-# - mariadb: 10.3
+# - mariadb: 10.6
 #
 
 ########################### Variables #############################
@@ -217,19 +217,26 @@ echo "$gzipconf" > /etc/nginx/conf/gzip.conf;
 echo "$fastcgicache" > /etc/nginx/conf/fastcgicache.conf
 
 # Mariadb
-# sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
-sudo apt-key adv --fetch-keys 'https://mariadb.org/mariadb_release_signing_key.asc'
-sudo add-apt-repository "deb [arch=amd64,arm64,ppc64el] http://mirror.zol.co.zw/mariadb/repo/${MARIADB_VERSION}/ubuntu ${UBUNTU_RELEASE_NAME} main"
 sudo apt-get update
-sudo apt update
-sudo apt-get install -y dialog apt-utils
+curl -LsS -O https://downloads.mariadb.com/MariaDB/mariadb_repo_setup
+sudo bash mariadb_repo_setup "--mariadb-server-version=${MARIADB_VERSION}"
+sudo apt-get update
+cat /etc/apt/sources.list.d/mariadb.list
 MARIADB_PASSWORD="mariadb-server-${MARIADB_VERSION} mysql-server/root_password password PASS"
 MARIADB_PASSWORD_AGAIN="mariadb-server-${MARIADB_VERSION} mysql-server/root_password_again password PASS"
 sudo debconf-set-selections <<< ${MARIADB_PASSWORD}
 sudo debconf-set-selections <<< ${MARIADB_PASSWORD_AGAIN}
-sudo apt-get install -y mariadb-server > /dev/null
-sudo service mysql start
-mysql -uroot -pPASS -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"
+sudo apt-get install -y mariadb-server mariadb-client > /dev/null
+sudo service mariadb start # note that this is not mysql anymore, it's mariadb
+mysql -u root -pPASS -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"
+
+# remind folks about these:
+
+# Run this to enable mariadb to start on reboot
+#sudo systemctl enable mariadb
+
+# Run this to secure the installation!
+#sudo mariadb-secure-installation 
 
 # PHP
 LC_ALL=C.UTF-8 sudo add-apt-repository -y ppa:ondrej/php
@@ -239,7 +246,7 @@ sudo apt-get -y --no-install-recommends install php${PHP_VERSION}-fpm
 sudo apt-get clean
 
 sudo update-alternatives --set php /usr/bin/php${PHP_VERSION}
-service php${PHP_VERSION}-fpm restart
+service php${PHP_VERSION}-fpm start
 
 # PHP
 sudo apt-get update && \
@@ -298,3 +305,10 @@ sed -i "s=include /etc/nginx/sites=include /etc/nginx/sites-enabled=g;" nginx.co
 mkdir -p /etc/nginx/sites-available/
 mkdir -p /etc/nginx/sites-enabled/
 mv /etc/nginx/sites/* /etc/nginx/sites-available/
+
+printf "Script: Done. Read log for status of services"
+printf "MariaDB - Action required: Run this to enable mariadb to start on reboot.\n"
+printf "sudo systemctl enable mariadb\n")
+
+printf "MariaDB - Action required: Run this to secure the installation!\n"
+printf "sudo mariadb-secure-installation\n")
