@@ -223,8 +223,10 @@ sudo add-apt-repository "deb [arch=amd64,arm64,ppc64el] http://mirror.zol.co.zw/
 sudo apt-get update
 sudo apt update
 sudo apt-get install -y dialog apt-utils
-sudo debconf-set-selections <<< "mariadb-server-${MARIADB_VERSION} mysql-server/root_password password PASS"
-sudo debconf-set-selections <<< "mariadb-server-${MARIADB_VERSION} mysql-server/root_password_again password PASS"
+MARIADB_PASSWORD="mariadb-server-${MARIADB_VERSION} mysql-server/root_password password PASS"
+MARIADB_PASSWORD_AGAIN="mariadb-server-${MARIADB_VERSION} mysql-server/root_password_again password PASS"
+sudo debconf-set-selections <<< ${MARIADB_PASSWORD}
+sudo debconf-set-selections <<< ${MARIADB_PASSWORD_AGAIN}
 sudo apt-get install -y mariadb-server > /dev/null
 sudo service mysql start
 mysql -uroot -pPASS -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';"
