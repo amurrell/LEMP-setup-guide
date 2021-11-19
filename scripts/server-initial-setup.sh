@@ -308,7 +308,7 @@ mv /etc/nginx/sites/* /etc/nginx/sites-available/
 
 printf "Script: Done. Read log for status of services"
 printf "MariaDB - Action required: Run this to enable mariadb to start on reboot.\n"
-printf "sudo systemctl enable mariadb\n")
+printf "sudo systemctl enable mariadb\n"
 
 printf "MariaDB - Action required: Run this to secure the installation!\n"
-printf "sudo mariadb-secure-installation\n")
+printf "sudo mariadb-secure-installation\n"
