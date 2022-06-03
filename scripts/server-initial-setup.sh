@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 #
-# Adapted 
+# Adapted
 #    from: https://github.com/actuallymentor/Setup-Script-Nginx-Pagespeed-PHP7-Mariadb
 #    by:   @actuallymentor, github
 #
 # This install script uses the following version defaults:
 #
-#  NOTE: override these versions in the config/versions folder 
+#  NOTE: override these versions in the config/versions folder
 #        by adding files with override prepended eg "override-php-version"
 #
 # - openssl: 1.1.1k
@@ -37,27 +37,27 @@ MARIADB_VERSION=$(<../config/versions/mariadb-version)
 UBUNTU_RELEASE_NAME=$(<../config/versions/ubuntu-release-name)
 
 # Version overrides
-if [ -f ../config/php-version ] && [ ! -z $(<../config/versions/override-php-version) ]; then
+if [ -f ../config/versions/override-php-version ] && [ ! -z $(<../config/versions/override-php-version) ]; then
 	PHP_VERSION=$(<../config/versions/override-php-version)
 fi
 
-if [ -f ../config/nginx-version ] && [ ! -z $(<../config/versions/override-nginx-version) ]; then
+if [ -f ../config/versions/override-nginx-version ] && [ ! -z $(<../config/versions/override-nginx-version) ]; then
 	NGINX_VERSION=$(<../config/versions/override-nginx-version)
 fi
 
-if [ -f ../config/nginx-version ] && [ ! -z $(<../config/versions/override-pagespeed-version) ]; then
+if [ -f ../config/versions/override-pagespeed-version ] && [ ! -z $(<../config/versions/override-pagespeed-version) ]; then
 	PAGESPEED_VERSION=$(<../config/versions/override-pagespeed-version)
 fi
 
-if [ -f ../config/nginx-version ] && [ ! -z $(<../config/versions/override-openssl-version) ]; then
+if [ -f ../config/versions/override-openssl-version ] && [ ! -z $(<../config/versions/override-openssl-version) ]; then
 	OPENSSL_VERSION=$(<../config/versions/override-openssl-version)
 fi
 
-if [ -f ../config/nginx-version ] && [ ! -z $(<../config/versions/override-mariadb-version) ]; then
+if [ -f ../config/versions/override-mariadb-version ] && [ ! -z $(<../config/versions/override-mariadb-version) ]; then
 	MARIADB_VERSION=$(<../config/versions/override-mariadb-version)
 fi
 
-if [ -f ../config/ubuntu-release-name ] && [ ! -z $(<../config/versions/override-ubuntu-release-name) ]; then
+if [ -f ../config/versions/override-ubuntu-release-name ] && [ ! -z $(<../config/versions/override-ubuntu-release-name) ]; then
 	UBUNTU_RELEASE_NAME=$(<../config/versions/override-ubuntu-release-name)
 fi
 
@@ -87,7 +87,7 @@ sudo apt-get update
 
 ### 18.04 AMI has grub issue
 ### Workaround: Pre-update /etc/default/grub and
-### remove /boot/grub/menu.lst to avoid 'file changed' 
+### remove /boot/grub/menu.lst to avoid 'file changed'
 ### prompts from blocking completion of unattended update process
 # patch /etc/default/grub <<'EOF'
 # 10c10
@@ -236,7 +236,7 @@ mysql -u root -pPASS -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';
 #sudo systemctl enable mariadb
 
 # Run this to secure the installation!
-#sudo mariadb-secure-installation 
+#sudo mariadb-secure-installation
 
 # PHP
 LC_ALL=C.UTF-8 sudo add-apt-repository -y ppa:ondrej/php
@@ -295,7 +295,7 @@ service nginx restart
 
 # Alter Nginx Conf things
 
-if [ ! -d "/etc/nginx" ]; then  
+if [ ! -d "/etc/nginx" ]; then
     printf "Does not seem that nginx is installed properly.\n"
     exit 1
 fi

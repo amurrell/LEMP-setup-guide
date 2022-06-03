@@ -2,8 +2,13 @@
 cr=`echo $'\n.'`
 cr=${cr%.}
 
+PHP_VERSION=$(<../config/versions/php-version)
+if [ -f ../config/versions/override-php-version ] && [ ! -z $(<../config/versions/override-php-version) ]; then
+	PHP_VERSION=$(<../config/versions/override-php-version)
+fi
+
 # Check for Nginx Conf things
-if [ ! -d "/etc/nginx" ]; then  
+if [ ! -d "/etc/nginx" ]; then
     printf "Does not seem that nginx is installed properly, cannot install a site.\n"
     exit 1
 fi
@@ -40,13 +45,13 @@ rm tempdomain.txt
 read -p "Your Github/Bitbucket Repo (use ssh url git@github.com:youruser/yourrepo.git):" GITHUB
 
 # SSH - check it exists?
-if [ ! -d "/root/.ssh" ]; then  
+if [ ! -d "/root/.ssh" ]; then
     printf "You do not have an ~/.ssh folder, so worried that you don't have this setup properly\n"
     printf "If using a git repo, probably use the HTTPS url.\n"
 fi
 
 # SSH - check for ssh-add -L to see if we have ssh keys loaded (from port forwarding or ssh-agent in docker)
-if [ -d "/root/.ssh" ]; then  
+if [ -d "/root/.ssh" ]; then
     ssh-add -L | grep 'Could not open a connection to your authentication agent' &> /dev/null
     if [ $? == 0 ]; then
         printf "here i am\n"
@@ -65,7 +70,7 @@ if [ ! "$GITHUB" == "" ] && [ -d "/root/.ssh" ]; then
 else
     cd /var/www/
     mkdir "$DOMAIN"
-    printf "Without a github repo or ssh setup, you are responsible for putting your files into /var/www/$DOMAIN\n" 
+    printf "Without a github repo or ssh setup, you are responsible for putting your files into /var/www/$DOMAIN\n"
 fi
 
 mkdir -p "/var/www/$DOMAIN/DockerLocal/logs"
@@ -106,9 +111,9 @@ then
 fi
 
 # Create php site config
-mkdir -p /etc/php/7.3/fpm/pool.d/
-cp /var/www/LEMP-setup-guide/config/site.php-fpm.conf /etc/php/7.3/fpm/pool.d/"$DOMAIN.conf"
-cd /etc/php/7.3/fpm/pool.d/
+mkdir -p /etc/php/${PHP_VERSION}/fpm/pool.d/
+cp /var/www/LEMP-setup-guide/config/site.php-fpm.conf /etc/php/${PHP_VERSION}/fpm/pool.d/"$DOMAIN.conf"
+cd /etc/php/${PHP_VERSION}/fpm/pool.d/
 sed -i "s/SITEDOTCOM/${DOMAIN}/g;" "$DOMAIN.conf"
 sed -i "s/SITE_COM/${DOMAIN_COM}/g;" "$DOMAIN.conf"
 
@@ -117,7 +122,7 @@ read -p "Do you want to setup PHP environmental variables for a mysql database? 
 echo    # (optional) move to a new line
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
-    
+
     # PROMPT for DATABASE_NAME
     read -p "Your database name, ie: site_com: $cr" DATABASE_NAME
     # PROMPT for DATABASE_USER
@@ -137,10 +142,10 @@ then
     sed -i "s/DATABASEPORT/${DATABASE_PORT}/g;" "$DOMAIN.conf"
 
     # test php
-    sudo php-fpm7.3 -t
+    sudo php-fpm${PHP_VERSION} -t
 
     # restart php
-    sudo service php7.3-fpm reload
+    sudo service php${PHP_VERSION}-fpm reload
 
     read -p "Do you want to setup a local mysql database using the info for php env vars above? " -n 1 -r
     echo    # (optional) move to a new line
