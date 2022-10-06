@@ -3,6 +3,7 @@ pagespeed RewriteLevel PassThrough;
 pagespeed FetchHttps enable;
 pagespeed EnableFilters add_head;
 pagespeed CriticalImagesBeaconEnabled false;
+pagespeed RespectXForwardedProto on;
 # pagespeed EnableFilters combine_css;
 # pagespeed EnableFilters rewrite_css;
 # pagespeed EnableFilters fallback_rewrite_css_urls;
