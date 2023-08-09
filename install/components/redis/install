@@ -5,9 +5,9 @@ REDIS_CONF=$(<redis.conf)
 REDIS_CONF_PATH='/etc/redis/redis.conf'
 
 # Figure out PHP Version from php-version or override-php-version in this repo's root config/versions
-PHP_VERSION=$(<../config/php-version)
-if [ -f "../config/override-php-version" ]; then
-    PHP_VERSION=$(<../config/override-php-version)
+PHP_VERSION=$(<../../../config/php-version)
+if [ -f "../../../config/override-php-version" ]; then
+    PHP_VERSION=$(<../../../config/override-php-version)
 fi
 
 # Update
