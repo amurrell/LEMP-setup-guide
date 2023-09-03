@@ -245,18 +245,19 @@ get_repo_name() {
 setup_repo_ssh_with_deployment_key() {
     local repo_name="$1"
     printf "============ Add to ssh config file to ensure this host uses the correct key for the repo\n"
+    mkdir -p "$SSH_PATH"
 
-    # store this multiline config in a var
-    local config=$(cat <<-END
-Host github.com-${repo_name}
-    Hostname github.com
-    IdentityFile=${SSH_PATH}/${repo_name}_deploy_key
-    IdentitiesOnly=yes
-END
-)
+    # if the config file doesnt exist, touch it as owner user
+    if [ ! -f "${SSH_PATH}/config" ]; then
+        su - $OWNER_USER -c "bash -c 'touch ${SSH_PATH}/config'"
+    fi
 
-    # switch to OWNER_USER to append config to ssh config of OWNER_USER
-    su - $OWNER_USER -c "bash -c 'echo \"$config\" >> ${SSH_PATH}/config'"
+    # append this config to SSH_PATH/config as owneruser
+    # Host github.com-${repo_name}
+    #    Hostname github.com
+    #    IdentityFile=${SSH_PATH}/${repo_name}_deploy_key
+    #    IdentitiesOnly=yes
+    su - $OWNER_USER -c "bash -c 'echo -e \"\nHost github.com-${repo_name}\n\tHostname github.com\n\tIdentityFile=${SSH_PATH}/${repo_name}_deploy_key\n\tIdentitiesOnly=yes\" >> ${SSH_PATH}/config'"
 
     # Alter GITHUB url to use the new host
     GITHUB=$(echo "$GITHUB" | sed "s/github.com/github.com-${repo_name}/g")
