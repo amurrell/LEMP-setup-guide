@@ -24,7 +24,7 @@ These are the versions installed by default, but you can easily change them:
 - MariaDB: 10.11 (LTS)
 - Nginx: 1.24.0 (Stable)
 - OpenSSL: 3.0.10 (LTS)
-- Pagespeed: 1.13.35.2 (Stable)
+- Pagespeed: 1.15.0.0-8917 - (use 1.13.35.2-stable for nginx < 1.23.0)
 - PHP: 8.2
 
 ### Customizing Versions
