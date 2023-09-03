@@ -279,8 +279,8 @@ if [ "$DEPLOY_KEY_PUBLIC" == false ] || [ "$DEPLOY_KEY_PRIVATE" == false ]; then
             printf "============ ✋ Okay, stopping moving on. We will try to use ssh agent forwarding or other means then...\n"
         fi
     fi
-    # github is set, deploy keys are text
-elif [ ! -z "$GITHUB" ] && [ ! -z "$DEPLOY_KEY_PUBLIC" ] && [ ! -z "$DEPLOY_KEY_PRIVATE" ]; then
+    # github is set, deploy keys length is at least 10
+elif [ ! -z "$GITHUB" ] && [ ${#DEPLOY_KEY_PUBLIC} -gt 10 ] && [ ${#DEPLOY_KEY_PRIVATE} -gt 10 ]; then
     save_and_fix_permissions "$REPO_NAME" "$DEPLOY_KEY_PUBLIC" "$DEPLOY_KEY_PRIVATE"
     setup_repo_ssh_with_deployment_key "$REPO_NAME"
 else
@@ -348,7 +348,7 @@ apply_nginx_config() {
 }
 
 # (only) if NGINX_SITE_CONF_PATH is not set, does NGINX_WITH_PHP matter in determining the default used:
-if [ -n $NGINX_SITE_CONF_PATH ]; then
+if [ -n "$NGINX_SITE_CONF_PATH" ]; then
     # if NGINX_WITH_PHP is true, then the default is site.nginx.php.conf
     if [ "$NGINX_WITH_PHP" == true ]; then
         NGINX_SITE_CONF_PATH="/var/www/LEMP-setup-guide/config/site.nginx.conf"
