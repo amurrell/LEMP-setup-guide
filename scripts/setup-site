@@ -332,14 +332,20 @@ if [ ! -f ${SSH_PATH}/${REPO_NAME}_deploy_key ]; then
     fi
 fi
 
+ORIGINAL_USER=$(whoami)
+cd /var/www
+
 # GIT REPO - setup a git repo if we have GITHUB AND (ssh folder exists OR we have a deploy key at .ssh/${REPO_NAME}_deploy_key)
 if [ ! -z "$GITHUB" ] && ([ -d ${SSH_PATH} ] || [ -f ${SSH_PATH}/${REPO_NAME}_deploy_key ]); then
-    cd /var/www
-    git clone "$GITHUB" "$DOMAIN"
+    # bc the user might have to type an ssh password, i need to switch to the owner user to do this
+    su - $OWNER_USER -c "bash -c 'cd /var/www/ && git clone $GITHUB $DOMAIN'"
+    # switch back to original user
+    sudo su $ORIGINAL_USER
 else
-    cd /var/www/
-    mkdir "$DOMAIN"
+    su -c "cd /var/www/ && mkdir $DOMAIN" "$OWNER_USER"
     printf "=========== 👉 Without a github repo or ssh setup, you are responsible for putting your files into /var/www/$DOMAIN\n"
+    # switch back to original user
+    sudo su $ORIGINAL_USER
 fi
 
 mkdir -p "/var/www/$DOMAIN/DockerLocal/logs"
