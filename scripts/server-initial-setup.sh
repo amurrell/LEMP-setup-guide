@@ -34,7 +34,10 @@ NGINX_VERSION=$(<../config/versions/nginx-version)
 PAGESPEED_VERSION=$(<../config/versions/pagespeed-version)
 OPENSSL_VERSION=$(<../config/versions/openssl-version)
 MARIADB_VERSION=$(<../config/versions/mariadb-version)
-UBUNTU_RELEASE_NAME=$(<../config/versions/ubuntu-release-name)
+
+# detect the ubuntu version and release name
+UBUNTU_VERSION=$(lsb_release -r | awk '{print $2}')
+UBUNTU_RELEASE_NAME=$(lsb_release -c | awk '{print $2}')
 
 # Version overrides
 if [ -f ../config/versions/override-php-version ] && [ ! -z $(<../config/versions/override-php-version) ]; then
@@ -57,10 +60,6 @@ if [ -f ../config/versions/override-mariadb-version ] && [ ! -z $(<../config/ver
 	MARIADB_VERSION=$(<../config/versions/override-mariadb-version)
 fi
 
-if [ -f ../config/versions/override-ubuntu-release-name ] && [ ! -z $(<../config/versions/override-ubuntu-release-name) ]; then
-	UBUNTU_RELEASE_NAME=$(<../config/versions/override-ubuntu-release-name)
-fi
-
 # Nginx configurations
 global_nginx_conf=$(<../config/nginx/global_nginx_conf_custom)
 nginx_conf=$(<../config/nginx/nginx_conf)
@@ -68,7 +67,6 @@ mod_pagespeed=$(<../config/nginx/mod_pagespeed)
 cache=$(<../config/nginx/cache)
 gzipconf=$(<../config/nginx/gzip_conf)
 log_format=$(<../config/nginx/log_format_conf)
-
 
 #Auto security update rules
 updaterules=$(<../config/security/updates_rules)
@@ -134,10 +132,16 @@ nps_dir=$(find . -name "*pagespeed-ngx-${PAGESPEED_VERSION}" -type d)
 cd "$nps_dir"
 NPS_RELEASE_NUMBER=${PAGESPEED_VERSION/beta/}
 NPS_RELEASE_NUMBER=${PAGESPEED_VERSION/stable/}
-psol_url=https://dl.google.com/dl/page-speed/psol/${NPS_RELEASE_NUMBER}.tar.gz
-[ -e scripts/format_binary_url.sh ] && psol_url=$(scripts/format_binary_url.sh PSOL_BINARY_URL)
+
+# Fix psol nginx/ubuntu version combability issues
+# issue: on newer glibc - eg with ubuntu jammy, error "undefined reference to `pthread_yield'".
+# solution: Install correct psol for unbutu release, based on another contributors' kind fix.
+#  which will rely on their psol hosted files for now.
+# - source - fix: https://github.com/apache/incubator-pagespeed-ngx/issues/1760#issue-1385031517
+# - source - build psol from source example: https://github.com/eilandert/build_psol/blob/main/docker/bootstrap.sh
+psol_url=http://www.tiredofit.nl/psol-${UBUNTU_RELEASE_NAME}.tar.xz
 wget ${psol_url}
-tar -xzvf $(basename ${psol_url})  # extracts to psol/
+tar xvf psol-${UBUNTU_RELEASE_NAME}.tar.xz
 
 # Openssl Download
 wget -qO - https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz | tar xzf  - -C /tmp
