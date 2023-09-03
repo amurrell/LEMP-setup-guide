@@ -220,7 +220,7 @@ setup_repo_ssh_with_deployment_key() {
 
 Host github.com-${repo_name}
     Hostname github.com
-    IdentityFile=/home/user/.ssh/${repo_name}_deploy_key
+    IdentityFile=~/.ssh/${repo_name}_deploy_key
     IdentitiesOnly=yes
 EOF
 
@@ -243,7 +243,7 @@ save_and_fix_permissions() {
 
 REPO_NAME=$(get_repo_name "$GITHUB")
 
-if [ -z "$DEPLOY_KEY_PUBLIC" ] || [ -z "$DEPLOY_KEY_PRIVATE" ]; then
+if [ "$DEPLOY_KEY_PUBLIC" == false ] || [ "$DEPLOY_KEY_PRIVATE" == false ]; then
     read -p "Do you have a deployment key for this repo? " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -270,7 +270,8 @@ if [ -z "$DEPLOY_KEY_PUBLIC" ] || [ -z "$DEPLOY_KEY_PRIVATE" ]; then
             printf "============ ✋ Okay, stopping moving on. We will try to use ssh agent forwarding or other means then...\n"
         fi
     fi
-elif [ -n "$GITHUB" ] && [ -n "$DEPLOY_KEY_PUBLIC" ] && [ -n "$DEPLOY_KEY_PRIVATE" ]; then
+    # github is set, deploy keys are text
+elif [ ! -z "$GITHUB" ] && [ ! -z "$DEPLOY_KEY_PUBLIC" ] && [ ! -z "$DEPLOY_KEY_PRIVATE" ]; then
     save_and_fix_permissions "$REPO_NAME" "$DEPLOY_KEY_PUBLIC" "$DEPLOY_KEY_PRIVATE"
     setup_repo_ssh_with_deployment_key "$REPO_NAME"
 else
