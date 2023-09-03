@@ -124,14 +124,22 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y unzip
 DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common
 DEBIAN_FRONTEND=noninteractive apt-get install -y uuid-dev
 
-# Pagespeed download
+# Pagespeed download - we will be in root
 cd
-wget https://github.com/apache/incubator-pagespeed-ngx/archive/v${PAGESPEED_VERSION}.zip
-unzip v${PAGESPEED_VERSION}.zip
+
+# if PAGESPEED_VERSION contains "beta" or "stable" then use that version
+# - eg. options are: 1.14.33.1-RC1, 1.13.35.2-stable, and before... from releases
+# otherwise, if the version starts with 1.15, then use the master branch. It's archived so that's the last version. They never released it.
+# - eg. 1.15.0.0-8917 (master branch) git clone --depth=1 https://github.com/apache/incubator-pagespeed-ngx.git
+if [[ $PAGESPEED_VERSION == *"beta"* ]] || [[ $PAGESPEED_VERSION == *"stable"* ]]; then
+	wget https://github.com/apache/incubator-pagespeed-ngx/archive/v${PAGESPEED_VERSION}.zip
+	unzip v${PAGESPEED_VERSION}.zip
+elif [[ $PAGESPEED_VERSION == "1.15"* ]]; then
+	git clone --depth=1 https://github.com/apache/incubator-pagespeed-ngx.git incubator-pagespeed-ngx-${PAGESPEED_VERSION}
+fi
+
 nps_dir=$(find . -name "*pagespeed-ngx-${PAGESPEED_VERSION}" -type d)
 cd "$nps_dir"
-NPS_RELEASE_NUMBER=${PAGESPEED_VERSION/beta/}
-NPS_RELEASE_NUMBER=${PAGESPEED_VERSION/stable/}
 
 # Fix psol nginx/ubuntu version combability issues
 # issue: on newer glibc - eg with ubuntu jammy, error "undefined reference to `pthread_yield'".
