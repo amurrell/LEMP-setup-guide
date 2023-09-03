@@ -347,8 +347,8 @@ apply_nginx_config() {
     ln -s /etc/nginx/sites-available/"${DOMAIN}.conf" /etc/nginx/sites-enabled/
 }
 
-# (only) if NGINX_SITE_CONF_PATH is not set, does NGINX_WITH_PHP matter in determining the default used:
-if [ -n "$NGINX_SITE_CONF_PATH" ]; then
+# (only) if NGINX_SITE_CONF_PATH is empty, does NGINX_WITH_PHP matter in determining the default used:
+if [ -z "$NGINX_SITE_CONF_PATH" ]; then
     # if NGINX_WITH_PHP is true, then the default is site.nginx.php.conf
     if [ "$NGINX_WITH_PHP" == true ]; then
         NGINX_SITE_CONF_PATH="/var/www/LEMP-setup-guide/config/site.nginx.conf"
