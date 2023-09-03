@@ -16,24 +16,24 @@ fi
 ORIGINAL_ARG_COUNT=$#
 
 # For all prompts below, make switches for them all so that they dont need prompts
-# note: put all on one line!
-# ie: ./setup-site
-#   --domain=mysite.com
-#   --github=git@github...
-#   --deploy-key-public-file=path-to-key
-#   --deploy-key-private-file=path-to-key
-#   --php-pools=true
-#   --nginx-with-php=true
-#   --nginx-site-conf-path=/var/www/LEMP-setup-guide/config/site.nginx.conf (or site.vueapp.nginx.conf)
-#   --php-with-mysql=true
-#   --php-site-conf-path=/var/www/LEMP-setup-guide/config/site.php-fpm.conf
-#   --mysql-create-db=true
-#   --mysql-root-user=root
-#   --mysql-root-pass=1234
-#   --database-name=site_com
-#   --database-user=site.com
-#   --database-pass=cRaZyPaSs
-#   --database-host=localhost
+#
+# ie: ./setup-site \
+#   --domain=mysite.com \
+#   --github=git@github... \
+#   --deploy-key-public-file=path-to-key \
+#   --deploy-key-private-file=path-to-key \
+#   --php-pools=true \
+#   --nginx-with-php=true \
+#   --nginx-site-conf-path=/var/www/LEMP-setup-guide/config/site.nginx.conf (or site.vueapp.nginx.conf) \
+#   --php-with-mysql=true \
+#   --php-site-conf-path=/var/www/LEMP-setup-guide/config/site.php-fpm.conf \
+#   --mysql-create-db=true \
+#   --mysql-root-user=root \
+#   --mysql-root-pass=1234 \
+#   --database-name=site_com \
+#   --database-user=site.com \
+#   --database-pass=cRaZyPaSs \
+#   --database-host=localhost \
 #   --database-port=3306
 
 # Default values (can be overwritten by passed parameters)
@@ -278,10 +278,10 @@ else
 fi
 
 # SSH - use SSH agent forwarding - only if we dont have ~/.ssh/${REPO_NAME}_deploy_key
-if [ ! -f "~/.ssh/${REPO_NAME}_deploy_key" ]; then
+if [ ! -f ~/.ssh/${REPO_NAME}_deploy_key ]; then
 
     # if we are using SimpleDocker to test this script, we will have a shared volume of tempssh to forward the keys
-    if [ -d "~/.ssh" ]; then
+    if [ -d ~/.ssh ]; then
         printf "You do not have an ~/.ssh folder... worried that you don't have this setup properly\n"
         printf "If using a git repo, probably use the HTTPS url instead.\n"
 
@@ -299,7 +299,7 @@ if [ ! -f "~/.ssh/${REPO_NAME}_deploy_key" ]; then
 fi
 
 # GIT REPO - setup a git repo if we have GITHUB AND (ssh folder exists OR we have a deploy key at .ssh/${REPO_NAME}_deploy_key)
-if [ ! -z "$GITHUB" ] && ([ -d "~/.ssh" ] || [ -f "~/.ssh/${REPO_NAME}_deploy_key" ]); then
+if [ ! -z "$GITHUB" ] && ([ -d ~/.ssh ] || [ -f ~/.ssh/${REPO_NAME}_deploy_key ]); then
     cd /var/www
     git clone "$GITHUB" "$DOMAIN"
 else
