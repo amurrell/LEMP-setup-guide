@@ -41,6 +41,7 @@ ORIGINAL_ARG_COUNT=$#
 DOMAIN=""
 GITHUB=""
 OWNER_USER=$(whoami)
+ORIGINAL_USER=$(whoami)
 DEPLOY_KEY_PUBLIC=false
 DEPLOY_KEY_PRIVATE=false
 PHP_POOLS=false
@@ -244,30 +245,35 @@ get_repo_name() {
 setup_repo_ssh_with_deployment_key() {
     local repo_name="$1"
     printf "============ Add to ssh config file to ensure this host uses the correct key for the repo\n"
-    cat << EOF >> ${SSH_PATH}/config
 
+    # store this multiline config in a var
+    local config=$(cat <<-END
 Host github.com-${repo_name}
     Hostname github.com
     IdentityFile=${SSH_PATH}/${repo_name}_deploy_key
     IdentitiesOnly=yes
-EOF
+END
+)
+
+    # switch to OWNER_USER to append config to ssh config of OWNER_USER
+    su - $OWNER_USER -c "bash -c 'echo \"$config\" >> ${SSH_PATH}/config'"
 
     # Alter GITHUB url to use the new host
     GITHUB=$(echo "$GITHUB" | sed "s/github.com/github.com-${repo_name}/g")
 }
 
 # Save the deployment keys and fix their permissions
-save_and_fix_permissions() {
-    local repo_name="$1"
-    local public_key="$2"
-    local private_key="$3"
+# save_and_fix_permissions() {
+#     local repo_name="$1"
+#     local public_key="$2"
+#     local private_key="$3"
 
-    echo "$public_key" > ${SSH_PATH}/${repo_name}_deploy_key.pub
-    echo "$private_key" > ${SSH_PATH}/${repo_name}_deploy_key
+#     echo "$public_key" > ${SSH_PATH}/${repo_name}_deploy_key.pub
+#     echo "$private_key" > ${SSH_PATH}/${repo_name}_deploy_key
 
-    printf "============ Fix permissions on devop keys\n"
-    chmod u=rw,go= ${SSH_PATH}/${repo_name}_deploy_key ${SSH_PATH}/${repo_name}_deploy_key.pub
-}
+#     printf "============ Fix permissions on devop keys\n"
+#     chmod u=rw,go= ${SSH_PATH}/${repo_name}_deploy_key ${SSH_PATH}/${repo_name}_deploy_key.pub
+# }
 
 REPO_NAME=$(get_repo_name "$GITHUB")
 
@@ -281,7 +287,7 @@ if [ "$DEPLOY_KEY_PUBLIC" == false ] || [ "$DEPLOY_KEY_PRIVATE" == false ]; then
         printf "Paste your deploy private key, press enter, and press ctrl-d when done:\n"
         DEPLOY_KEY_PRIVATE=$(cat)
 
-        save_and_fix_permissions "$REPO_NAME" "$DEPLOY_KEY_PUBLIC" "$DEPLOY_KEY_PRIVATE"
+        # save_and_fix_permissions "$REPO_NAME" "$DEPLOY_KEY_PUBLIC" "$DEPLOY_KEY_PRIVATE"
         setup_repo_ssh_with_deployment_key "$REPO_NAME"
     else
         read -p "Do you want to make a deployment key and add it to your ssh config? " -n 1 -r
@@ -301,7 +307,7 @@ if [ "$DEPLOY_KEY_PUBLIC" == false ] || [ "$DEPLOY_KEY_PRIVATE" == false ]; then
     fi
     # github is set, deploy keys length is at least 10
 elif [ ! -z "$GITHUB" ] && [ ${#DEPLOY_KEY_PUBLIC} -gt 10 ] && [ ${#DEPLOY_KEY_PRIVATE} -gt 10 ]; then
-    save_and_fix_permissions "$REPO_NAME" "$DEPLOY_KEY_PUBLIC" "$DEPLOY_KEY_PRIVATE"
+    # save_and_fix_permissions "$REPO_NAME" "$DEPLOY_KEY_PUBLIC" "$DEPLOY_KEY_PRIVATE"
     setup_repo_ssh_with_deployment_key "$REPO_NAME"
 else
     printf "============ Skipping deployment key handling as it seems it's not being used...\n"
@@ -332,7 +338,6 @@ if [ ! -f ${SSH_PATH}/${REPO_NAME}_deploy_key ]; then
     fi
 fi
 
-ORIGINAL_USER=$(whoami)
 cd /var/www
 
 # GIT REPO - setup a git repo if we have GITHUB AND (ssh folder exists OR we have a deploy key at .ssh/${REPO_NAME}_deploy_key)
