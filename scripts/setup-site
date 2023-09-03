@@ -95,12 +95,20 @@ while [[ $# -gt 0 ]]; do
         if [ -f "${key#*=}" ]; then
             DEPLOY_KEY_PUBLIC=$(cat "${key#*=}")
         fi
+        # if this key is set to null set deploy key to null
+        if [ "${key#*=}" == "null" ]; then
+            DEPLOY_KEY_PUBLIC=null
+        fi
         shift
         ;;
         --deploy-key-private-file=*)
         # if the file exists, read it in
         if [ -f "${key#*=}" ]; then
             DEPLOY_KEY_PRIVATE=$(cat "${key#*=}")
+        fi
+        # if this key is set to null set deploy key to null
+        if [ "${key#*=}" == "null" ]; then
+            DEPLOY_KEY_PRIVATE=null
         fi
         shift
         ;;
@@ -243,6 +251,7 @@ save_and_fix_permissions() {
 
 REPO_NAME=$(get_repo_name "$GITHUB")
 
+# either deployment key is exactly false
 if [ "$DEPLOY_KEY_PUBLIC" == false ] || [ "$DEPLOY_KEY_PRIVATE" == false ]; then
     read -p "Do you have a deployment key for this repo? " -n 1 -r
     echo
