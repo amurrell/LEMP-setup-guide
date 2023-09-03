@@ -20,8 +20,8 @@ ORIGINAL_ARG_COUNT=$#
 # ie: ./setup-site
 #   --domain=mysite.com
 #   --github=git@github...
-#   --deploy-key-public-file=
-#   --deploy-key-private-file=
+#   --deploy-key-public-file=path-to-key
+#   --deploy-key-private-file=path-to-key
 #   --php-pools=true
 #   --nginx-with-php=true
 #   --nginx-site-conf-path=/var/www/LEMP-setup-guide/config/site.nginx.conf (or site.vueapp.nginx.conf)
@@ -61,8 +61,8 @@ help_message() {
     echo "Options:"
     printf "  --domain=DOMAIN_NAME              Specify domain eg. --domain=mysite.com\n"
     printf "  --github=GITHUB_REPO              Specify github repo using ssh eg. --github=git@github.com:youruser/yourrepo.git\n"
-    printf "  --deploy-key-public-file=FILE     Specify the path to the public deploy key file\n"
-    printf "  --deploy-key-private-file=FILE    Specify the path to the private deploy key file\n"
+    printf "  --deploy-key-public-file=PATH     Specify the path to the public deploy key file\n"
+    printf "  --deploy-key-private-file=PATH    Specify the path to the private deploy key file\n"
     printf "  --php-pools=true|false            Specify if you want to setup php pools; default is false\n"
     printf "  --nginx-with-php=true|false       Specify if you want to setup nginx with php upstreams; default is false\n"
     printf "  --nginx-site-conf-path=PATH       Specify the path to the nginx site conf file; default is /var/www/LEMP-setup-guide/config/site.nginx.conf  (or site.vueapp.nginx.conf)\n"
@@ -91,11 +91,17 @@ while [[ $# -gt 0 ]]; do
         shift
         ;;
         --deploy-key-public-file=*)
-        DEPLOY_KEY_PUBLIC=$(cat "${key#*=}")
+        # if the file exists, read it in
+        if [ -f "${key#*=}" ]; then
+            DEPLOY_KEY_PUBLIC=$(cat "${key#*=}")
+        fi
         shift
         ;;
         --deploy-key-private-file=*)
-        DEPLOY_KEY_PRIVATE=$(cat "${key#*=}")
+        # if the file exists, read it in
+        if [ -f "${key#*=}" ]; then
+            DEPLOY_KEY_PRIVATE=$(cat "${key#*=}")
+        fi
         shift
         ;;
         --php-pools=*)
@@ -106,8 +112,16 @@ while [[ $# -gt 0 ]]; do
         NGINX_WITH_PHP="${key#*=}"
         shift
         ;;
+        --nginx-site-conf-path=*)
+        NGINX_SITE_CONF_PATH="${key#*=}"
+        shift
+        ;;
         --php-with-mysql=*)
         PHP_WITH_MYSQL="${key#*=}"
+        shift
+        ;;
+        --php-site-conf-path=*)
+        PHP_SITE_CONF_PATH="${key#*=}"
         shift
         ;;
         --mysql-create-db=*)
