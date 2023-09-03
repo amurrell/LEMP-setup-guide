@@ -16,11 +16,12 @@ fi
 ORIGINAL_ARG_COUNT=$#
 
 # For all prompts below, make switches for them all so that they dont need prompts
+# note: put all on one line!
 # ie: ./setup-site
 #   --domain=mysite.com
 #   --github=git@github...
-#   --deploy-key-public=ssh-rsa...
-#   --deploy-key-private=BEGIN...
+#   --deploy-key-public-file=
+#   --deploy-key-private-file=
 #   --php-pools=true
 #   --nginx-with-php=true
 #   --nginx-site-conf-path=/var/www/LEMP-setup-guide/config/site.nginx.conf (or site.vueapp.nginx.conf)
@@ -60,8 +61,8 @@ help_message() {
     echo "Options:"
     printf "  --domain=DOMAIN_NAME              Specify domain eg. --domain=mysite.com\n"
     printf "  --github=GITHUB_REPO              Specify github repo using ssh eg. --github=git@github.com:youruser/yourrepo.git\n"
-    printf "  --deploy-key-public=PUBLIC_KEY    Specify deploy key public key eg. --deploy-key-public=ssh-rsa...\n"
-    printf "  --deploy-key-private=PRIVATE_KEY  Specify deploy key private key eg. --deploy-key-private=BEGIN...\n"
+    printf "  --deploy-key-public-file=FILE     Specify the path to the public deploy key file\n"
+    printf "  --deploy-key-private-file=FILE    Specify the path to the private deploy key file\n"
     printf "  --php-pools=true|false            Specify if you want to setup php pools; default is false\n"
     printf "  --nginx-with-php=true|false       Specify if you want to setup nginx with php upstreams; default is false\n"
     printf "  --nginx-site-conf-path=PATH       Specify the path to the nginx site conf file; default is /var/www/LEMP-setup-guide/config/site.nginx.conf  (or site.vueapp.nginx.conf)\n"
@@ -89,12 +90,12 @@ while [[ $# -gt 0 ]]; do
         GITHUB="${key#*=}"
         shift
         ;;
-        --deploy-key-public=*)
-        DEPLOY_KEY_PUBLIC="${key#*=}"
+        --deploy-key-public-file=*)
+        DEPLOY_KEY_PUBLIC=$(cat "${key#*=}")
         shift
         ;;
-        --deploy-key-private=*)
-        DEPLOY_KEY_PRIVATE="${key#*=}"
+        --deploy-key-private-file=*)
+        DEPLOY_KEY_PRIVATE=$(cat "${key#*=}")
         shift
         ;;
         --php-pools=*)
