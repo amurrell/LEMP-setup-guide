@@ -20,6 +20,7 @@ ORIGINAL_ARG_COUNT=$#
 # ie: ./setup-site \
 #   --domain=mysite.com \
 #   --github=git@github... \
+#   --owner-user=ubuntu \
 #   --deploy-key-public-file=path-to-key \
 #   --deploy-key-private-file=path-to-key \
 #   --php-pools=true \
@@ -39,6 +40,7 @@ ORIGINAL_ARG_COUNT=$#
 # Default values (can be overwritten by passed parameters)
 DOMAIN=""
 GITHUB=""
+OWNER_USER=$(whoami)
 DEPLOY_KEY_PUBLIC=false
 DEPLOY_KEY_PRIVATE=false
 PHP_POOLS=false
@@ -61,6 +63,7 @@ help_message() {
     echo "Options:"
     printf "  --domain=DOMAIN_NAME              Specify domain eg. --domain=mysite.com\n"
     printf "  --github=GITHUB_REPO              Specify github repo using ssh eg. --github=git@github.com:youruser/yourrepo.git\n"
+    printf "  --owner-user=USER                 Specify the owner user (used for deploy & ssh key ownership); default is whoami result\n"
     printf "  --deploy-key-public-file=PATH     Specify the path to the public deploy key file\n"
     printf "  --deploy-key-private-file=PATH    Specify the path to the private deploy key file\n"
     printf "  --php-pools=true|false            Specify if you want to setup php pools; default is false\n"
@@ -88,6 +91,13 @@ while [[ $# -gt 0 ]]; do
         ;;
         --github=*)
         GITHUB="${key#*=}"
+        shift
+        ;;
+        --owner-user=*)
+        # if the user exists
+        if id "${key#*=}" >/dev/null 2>&1; then
+            OWNER_USER="${key#*=}"
+        fi
         shift
         ;;
         --deploy-key-public-file=*)
@@ -177,6 +187,16 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+## SSH_PATH
+# if OWNER_USER is the same as whoami, then we can use the ssh keys in ${SSH_PATH}
+if [ "$OWNER_USER" == "$(whoami)" ]; then
+    SSH_PATH=$(echo ~)/.ssh
+else
+    # get home directory of $OWNER_USER
+    OWNER_HOME=$(getent passwd "$OWNER_USER" | cut -d: -f6)
+    SSH_PATH="$OWNER_HOME"/.ssh
+fi
+
 # Prompt for things
 
 ## Set up a site? Ask only if no options are passed
@@ -224,11 +244,11 @@ get_repo_name() {
 setup_repo_ssh_with_deployment_key() {
     local repo_name="$1"
     printf "============ Add to ssh config file to ensure this host uses the correct key for the repo\n"
-    cat << EOF >> ~/.ssh/config
+    cat << EOF >> ${SSH_PATH}/config
 
 Host github.com-${repo_name}
     Hostname github.com
-    IdentityFile=~/.ssh/${repo_name}_deploy_key
+    IdentityFile=${SSH_PATH}/${repo_name}_deploy_key
     IdentitiesOnly=yes
 EOF
 
@@ -242,11 +262,11 @@ save_and_fix_permissions() {
     local public_key="$2"
     local private_key="$3"
 
-    echo "$public_key" > ~/.ssh/${repo_name}_deploy_key.pub
-    echo "$private_key" > ~/.ssh/${repo_name}_deploy_key
+    echo "$public_key" > ${SSH_PATH}/${repo_name}_deploy_key.pub
+    echo "$private_key" > ${SSH_PATH}/${repo_name}_deploy_key
 
     printf "============ Fix permissions on devop keys\n"
-    chmod u=rw,go= ~/.ssh/${repo_name}_deploy_key ~/.ssh/${repo_name}_deploy_key.pub
+    chmod u=rw,go= ${SSH_PATH}/${repo_name}_deploy_key ${SSH_PATH}/${repo_name}_deploy_key.pub
 }
 
 REPO_NAME=$(get_repo_name "$GITHUB")
@@ -268,11 +288,11 @@ if [ "$DEPLOY_KEY_PUBLIC" == false ] || [ "$DEPLOY_KEY_PRIVATE" == false ]; then
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             printf "============ Generating new deploy keys - using -t ed25519\n"
-            ssh-keygen -t ed25519 -f ~/.ssh/${REPO_NAME}_deploy_key -q -N ""
+            ssh-keygen -t ed25519 -f ${SSH_PATH}/${REPO_NAME}_deploy_key -q -N ""
             printf "============ 📋 Reveal Devops Public Key - you need to paste into github deploy key in repo settings. Then run this setup site again.\n"
-            cat ~/.ssh/${REPO_NAME}_deploy_key.pub
+            cat ${SSH_PATH}/${REPO_NAME}_deploy_key.pub
             printf "============ 📋 Reveal Devops Private Key - you will need to answer with this when you run the script again.\n"
-            cat ~/.ssh/${REPO_NAME}_deploy_key
+            cat ${SSH_PATH}/${REPO_NAME}_deploy_key
 
             setup_repo_ssh_with_deployment_key "$REPO_NAME"
         else
@@ -287,13 +307,11 @@ else
     printf "============ Skipping deployment key handling as it seems it's not being used...\n"
 fi
 
-# SSH - use SSH agent forwarding - only if we dont have ~/.ssh/${REPO_NAME}_deploy_key
-if [ ! -f ~/.ssh/${REPO_NAME}_deploy_key ]; then
+# SSH - use SSH agent forwarding - only if we dont have ${SSH_PATH}/${REPO_NAME}_deploy_key
+if [ ! -f ${SSH_PATH}/${REPO_NAME}_deploy_key ]; then
 
     # if we are using SimpleDocker to test this script, we will have a shared volume of tempssh to forward the keys
-    if [ -d ~/.ssh ]; then
-        printf "You do not have an ~/.ssh folder... worried that you don't have this setup properly\n"
-        printf "If using a git repo, probably use the HTTPS url instead.\n"
+    if [ -d ${SSH_PATH} ]; then
 
         # SSH - check for ssh-add -L to see if we have ssh keys loaded (from port forwarding or ssh-agent in docker)
         ssh-add -L | grep 'Could not open a connection to your authentication agent' &> /dev/null
@@ -301,15 +319,21 @@ if [ ! -f ~/.ssh/${REPO_NAME}_deploy_key ]; then
             printf "=========== Trying to copy over a possible /root/tempssh if running in SimpleDocker\n"
             WHO=$('whoami')
             cp /root/tempssh/* /root/.ssh/ -R
-            chown $WHO:$WHO ~/.ssh/* -R
+            chown $WHO:$WHO ${SSH_PATH}/* -R
             eval `ssh-agent -s`
             ssh-add
+        fi
+
+        # if the github var does not start with https and still dont have a path
+        if [[ ! $GITHUB =~ ^https.* ]] && [ -d ${SSH_PATH} ]; then
+            printf "$OWNER_USER does not have an ${SSH_PATH} folder... worried that it is not setup properly\n"
+            printf "If using a git repo, probably use the HTTPS url instead.\n"
         fi
     fi
 fi
 
 # GIT REPO - setup a git repo if we have GITHUB AND (ssh folder exists OR we have a deploy key at .ssh/${REPO_NAME}_deploy_key)
-if [ ! -z "$GITHUB" ] && ([ -d ~/.ssh ] || [ -f ~/.ssh/${REPO_NAME}_deploy_key ]); then
+if [ ! -z "$GITHUB" ] && ([ -d ${SSH_PATH} ] || [ -f ${SSH_PATH}/${REPO_NAME}_deploy_key ]); then
     cd /var/www
     git clone "$GITHUB" "$DOMAIN"
 else
