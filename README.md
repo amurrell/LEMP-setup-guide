@@ -63,7 +63,7 @@ Jump down to: [During & After The Script](#during--after-the-script)
 
 First, `ssh` into your server and navigate to your website installation location, eg. `cd /var/www/`.
 
-Recommended to ssh into your server with agent forwarding ie `ssh root@yourip -A`
+Recommended to ssh into your server with agent forwarding ie `ssh root@yourip -A` if you are not planning to use deployment keys for your projects.
 
 ### Clone the repo
 
@@ -101,9 +101,9 @@ chmod +x server-initial-setup.sh
 
 - You'll get prompted for your ssh public key (to setup authorized keys for easier ssh access)
 
-- (Only on 16.04 install,) You'll get prompted to setup mariadb password, just use "password" for now.
+- (Only on 16.04 install,) You'll get prompted to setup mariadb/mysql password, just use "password" for now.
 
-- After everything is installed, you can run `sudo mysql_secure_installation` and follow prompts to remove test databases, anonymous users, and change the root password to something more secure.
+- After everything is installed, you can run `sudo mysql_secure_installation` (or `sudo mariadb_secure_installation`) and follow prompts to remove test databases, anonymous users, and change the root password to something more secure.
 
 - If you choose to **skip setting up a site**, you can always run the setup-site script later from `/var/www/LEMP-setup-guide/scripts/`. You can setup multiple sites using this script, one per run.
 
@@ -119,10 +119,14 @@ The following scripts are used "per site" that you want to setup on your server.
 
   This script can also take flags to support provisioning script use cases of this repo.
 
+  For more info, run `./setup-site --help`, or the table below.
+
   ```
   ./setup-site
    --domain=mysite.com
    --github=git@github...
+   --deploy-subfolder=false
+   --web-root-path=null
    --deploy-key-public-file=mysite-deploy-key.pub
    --deploy-key-private-file=mysite-deploy-key
    --php-pools=true
@@ -140,8 +144,35 @@ The following scripts are used "per site" that you want to setup on your server.
    --database-port=3306
   ```
 
+  | Option                         | Description                                                                                                                                                            | Default Value                                                     |
+  |--------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
+  | `--domain=DOMAIN_NAME`         | Specify domain e.g. `mysite.com`                                                                                                                                      | None                                                              |
+  | `--github=GITHUB_REPO`         | Specify GitHub repo using SSH e.g. `git@github.com:youruser/yourrepo.git`                                                                                             | None                                                              |
+  | `--deploy-subfolder`           | Specify if you want to deploy a subfolder of the repo. Possible values: `true`, `false` or path e.g. `releases`                                                        | `false`                                                           |
+  | `--web-root-path=PATH`         | Specify the path to the web root path within your "domain" folder or repo.                                                                                             | Blank (index file should be directly in the folder)                |
+  | `--owner-user=USER`            | Specify the owner user (used for deploy & ssh key ownership)                                                                                                           | Result of `whoami`                                                |
+  | `--deploy-key-public-file=PATH`| Specify the path to the public deploy key file                                                                                                                        | None                                                              |
+  | `--deploy-key-private-file=PATH`| Specify the path to the private deploy key file                                                                                                                       | None                                                              |
+  | `--php-pools`                  | Specify if you want to set up PHP pools. Possible values: `true` or `false`                                                                                            | `false`                                                           |
+  | `--nginx-with-php`             | Specify if you want to set up Nginx with PHP upstreams. Possible values: `true` or `false`                                                                             | `false`                                                           |
+  | `--nginx-site-conf-path=PATH`  | Specify the path to the Nginx site conf file                                                                                                                          | `/var/www/LEMP-setup-guide/config/site.nginx.conf` (or `site.vueapp.nginx.conf`) |
+  | `--php-with-mysql`             | Specify if you want to set up PHP with MySQL env vars. Possible values: `true` or `false`                                                                              | `false`                                                           |
+  | `--php-site-conf-path=PATH`    | Specify the path to the PHP site conf file                                                                                                                            | `/var/www/LEMP-setup-guide/config/site.php-fpm.conf`              |
+  | `--mysql-create-db`            | Specify if you want to set up a MySQL database. Possible values: `true` or `false`                                                                                     | `false`                                                           |
+  | `--mysql-root-user=USER`       | Specify the MySQL root user                                                                                                                                           | `root`                                                            |
+  | `--mysql-root-pass=PASS`       | Specify the MySQL root pass                                                                                                                                           | `1234`                                                            |
+  | `--database-name=NAME`         | Specify the database name                                                                                                                                             | None                                                              |
+  | `--database-user=USER`         | Specify the database user                                                                                                                                             | None                                                              |
+  | `--database-pass=PASS`         | Specify the database password                                                                                                                                         | None                                                              |
+  | `--database-host=HOST`         | Specify the database host                                                                                                                                             | `localhost`                                                       |
+  | `--database-port=PORT`         | Specify the database port                                                                                                                                             | `3306`                                                            |
+  | `--help`                       | Display the help message and exit                                                                                                                                     | None                                                              |
+
+
 - **setup-logrotate** (needs logrotate command and syslog user)
 - **install-cert** - sets up certbot for ssl on your site, with option to update nginx or not - creates a cronjob to keep fetching. ideal if you want control over how certbot affects nginx conf files.
+
+---
 
 ### Installable Components
 There are also **components** in the `install` folder, which allow you to install other specific common tools, as well as your own custom scripts.

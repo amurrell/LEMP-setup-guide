@@ -265,6 +265,11 @@ if [ "$WEB_ROOT_PATH" == false ]; then
     fi
 fi
 
+# if WEB_ROOT_PATH=null, then set to ""
+if [ "$WEB_ROOT_PATH" == null ]; then
+    WEB_ROOT_PATH=""
+fi
+
 # Extract repo name from the github URL
 get_repo_name() {
     local url="$1"
