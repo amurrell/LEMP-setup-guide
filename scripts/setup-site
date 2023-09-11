@@ -20,6 +20,8 @@ ORIGINAL_ARG_COUNT=$#
 # ie: ./setup-site \
 #   --domain=mysite.com \
 #   --github=git@github... \
+#   --deploy-subfolder=releases \
+#   --web-root-path=app/dist \
 #   --owner-user=ubuntu \
 #   --deploy-key-public-file=path-to-key \
 #   --deploy-key-private-file=path-to-key \
@@ -40,6 +42,8 @@ ORIGINAL_ARG_COUNT=$#
 # Default values (can be overwritten by passed parameters)
 DOMAIN=""
 GITHUB=""
+DEPLOY_SUBFOLDER=""
+WEB_ROOT_PATH=false
 OWNER_USER=$(whoami)
 ORIGINAL_USER=$(whoami)
 DEPLOY_KEY_PUBLIC=false
@@ -64,6 +68,8 @@ help_message() {
     echo "Options:"
     printf "  --domain=DOMAIN_NAME              Specify domain eg. --domain=mysite.com\n"
     printf "  --github=GITHUB_REPO              Specify github repo using ssh eg. --github=git@github.com:youruser/yourrepo.git\n"
+    printf "  --deploy-subfolder=false          Specify if you want to deploy a subfolder of the repo; default is false; otherwise put path eg. releases\n"
+    printf "  --web-root-path=PATH              Specify the path to the web root path within your "domain" folder or repo; the default is blank - so index file should be directly in the folder.\n"
     printf "  --owner-user=USER                 Specify the owner user (used for deploy & ssh key ownership); default is whoami result\n"
     printf "  --deploy-key-public-file=PATH     Specify the path to the public deploy key file\n"
     printf "  --deploy-key-private-file=PATH    Specify the path to the private deploy key file\n"
@@ -92,6 +98,14 @@ while [[ $# -gt 0 ]]; do
         ;;
         --github=*)
         GITHUB="${key#*=}"
+        shift
+        ;;
+        --deploy-subfolder=*)
+        DEPLOY_SUBFOLDER="${key#*=}"
+        shift
+        ;;
+        --web-root-path=*)
+        WEB_ROOT_PATH="${key#*=}"
         shift
         ;;
         --owner-user=*)
@@ -235,6 +249,22 @@ if [ -z "$GITHUB" ]; then
     read -p "Your Github/Bitbucket Repo (use ssh url git@github.com:youruser/yourrepo.git):" GITHUB
 fi
 
+# PROMPT - Deploy Subfolder - prompt if = ""
+if [ -z "$DEPLOY_SUBFOLDER" ]; then
+    read -p "Your Deploy Subfolder (if you want to deploy a subfolder of the repo); press enter to skip:" DEPLOY_SUBFOLDER
+    if [ "$DEPLOY_SUBFOLDER" == '' ]; then
+        DEPLOY_SUBFOLDER=false
+    fi
+fi
+
+# PROMPT - Web Root Path - prompt if = false
+if [ "$WEB_ROOT_PATH" == false ]; then
+    read -p "Your Web Root Path (relative to repo or domain folder - eg. html or app/dist; press enter to leave blank:" WEB_ROOT_PATH
+    if [ "$WEB_ROOT_PATH" == '' ]; then
+        WEB_ROOT_PATH=""
+    fi
+fi
+
 # Extract repo name from the github URL
 get_repo_name() {
     local url="$1"
@@ -352,6 +382,17 @@ cd /var/www
 
 # GIT REPO - setup a git repo if we have GITHUB AND (ssh folder exists OR we have a deploy key at .ssh/${REPO_NAME}_deploy_key)
 if [ ! -z "$GITHUB" ] && ([ -d ${SSH_PATH} ] || [ -f ${SSH_PATH}/${REPO_NAME}_deploy_key ]); then
+    if [ "$DEPLOY_SUBFOLDER" == false ]; then
+        printf "=========== Cloning $GITHUB into /var/www/$DOMAIN\n"
+        su - $OWNER_USER -c "bash -c 'cd /var/www/ && git clone $GITHUB $DOMAIN'"
+    else
+        printf "=========== Cloning $GITHUB into /var/www/$DOMAIN/$DEPLOY_SUBFOLDER/init\n"
+        mkdir -p "/var/www/$DOMAIN/$DEPLOY_SUBFOLDER"
+        su - $OWNER_USER -c "bash -c 'cd /var/www/$DOMAIN/ && git clone $GITHUB init'"
+        # also need to make this "init" release a symbolic link to /var/www/$DOMAIN/current - and we will need to adjust nginx conf too!
+        printf "=========== Making /var/www/$DOMAIN/current a symbolic link to /var/www/$DOMAIN/$DEPLOY_SUBFOLDER/init\n"
+        su - $OWNER_USER -c "bash -c 'cd /var/www/$DOMAIN && ln -s /var/www/$DOMAIN/$DEPLOY_SUBFOLDER/init current'"
+    fi
     # bc the user might have to type an ssh password, i need to switch to the owner user to do this
     su - $OWNER_USER -c "bash -c 'cd /var/www/ && git clone $GITHUB $DOMAIN'"
     # switch back to original user
@@ -389,7 +430,14 @@ apply_nginx_config() {
     cd /etc/nginx/sites-available/
     sed -i "s/SITEDOTCOM/${DOMAIN}/g" "$DOMAIN.conf"
     sed -i "s/SITE_COM/${DOMAIN_COM}/g" "$DOMAIN.conf"
+    sed -i "s/WEBROOTPATH/${WEB_ROOT_PATH}/g" "$DOMAIN.conf"
     ln -s /etc/nginx/sites-available/"${DOMAIN}.conf" /etc/nginx/sites-enabled/
+
+    # if we have DEPLOY_SUBFOLDER and therefore a "current" directory - then we need to sed some stuff in nginx
+    if [ "$DEPLOY_SUBFOLDER" != false ]; then
+        # For lines that do not contain '/var/www/${DOMAIN}/current', replace '/var/www/${DOMAIN}/' with '/var/www/${DOMAIN}/current/'
+        sed -i "/var\/www\/${DOMAIN}\/current/!s/var\/www\/${DOMAIN}\//var\/www\/${DOMAIN}\/current\//g" "$DOMAIN.conf"
+    fi
 }
 
 # (only) if NGINX_SITE_CONF_PATH is empty, does NGINX_WITH_PHP matter in determining the default used:
@@ -441,6 +489,12 @@ cp "$PHP_SITE_CONF_PATH" "/etc/php/${PHP_VERSION}/fpm/pool.d/${DOMAIN}.conf"
 cd /etc/php/${PHP_VERSION}/fpm/pool.d/
 sed -i "s/SITEDOTCOM/${DOMAIN}/g;" "$DOMAIN.conf"
 sed -i "s/SITE_COM/${DOMAIN_COM}/g;" "$DOMAIN.conf"
+
+# if we have DEPLOY_SUBFOLDER and therefore a "current" directory - then we need to sed some stuff in PHP
+if [ "$DEPLOY_SUBFOLDER" != false ]; then
+    # For lines that do not contain '/var/www/${DOMAIN}/current', replace '/var/www/${DOMAIN}/' with '/var/www/${DOMAIN}/current/'
+    sed -i "/var\/www\/${DOMAIN}\/current/!s/var\/www\/${DOMAIN}\//var\/www\/${DOMAIN}\/current\//g" "$DOMAIN.conf"
+fi
 
 # PROMPT for PHP ENV VARS
 if [ -z "$PHP_WITH_MYSQL" ]; then
