@@ -392,7 +392,7 @@ if [ ! -z "$GITHUB" ] && ([ -d ${SSH_PATH} ] || [ -f ${SSH_PATH}/${REPO_NAME}_de
         su - $OWNER_USER -c "bash -c 'cd /var/www/ && git clone $GITHUB $DOMAIN'"
     else
         printf "=========== Cloning $GITHUB into /var/www/$DOMAIN/$DEPLOY_SUBFOLDER/init\n"
-        su - $OWNER_USER -c "bash -c 'mkdir -p /var/www/$DOMAIN/$DEPLOY_SUBFOLDER && cd /var/www/$DOMAIN/ && git clone $GITHUB init'"
+        su - $OWNER_USER -c "bash -c 'mkdir -p /var/www/$DOMAIN/$DEPLOY_SUBFOLDER && cd /var/www/$DOMAIN/$DEPLOY_SUBFOLDER && git clone $GITHUB init'"
         # also need to make this "init" release a symbolic link to /var/www/$DOMAIN/current - and we will need to adjust nginx conf too!
         printf "=========== Making /var/www/$DOMAIN/current a symbolic link to /var/www/$DOMAIN/$DEPLOY_SUBFOLDER/init\n"
         su - $OWNER_USER -c "bash -c 'cd /var/www/$DOMAIN && ln -s /var/www/$DOMAIN/$DEPLOY_SUBFOLDER/init current'"
