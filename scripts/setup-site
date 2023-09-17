@@ -390,17 +390,19 @@ if [ ! -z "$GITHUB" ] && ([ -d ${SSH_PATH} ] || [ -f ${SSH_PATH}/${REPO_NAME}_de
     if [ "$DEPLOY_SUBFOLDER" == false ]; then
         printf "=========== Cloning $GITHUB into /var/www/$DOMAIN\n"
         su - $OWNER_USER -c "bash -c 'cd /var/www/ && git clone $GITHUB $DOMAIN'"
+        # dockerlocal logs
+        su - $OWNER_USER -c "bash -c 'mkdir -p /var/www/$DOMAIN/DockerLocal/logs'"
+        su - $OWNER_USER -c "bash -c 'mkdir -p /var/www/$DOMAIN/logs'"
     else
         printf "=========== Cloning $GITHUB into /var/www/$DOMAIN/$DEPLOY_SUBFOLDER/init\n"
         su - $OWNER_USER -c "bash -c 'mkdir -p /var/www/$DOMAIN/$DEPLOY_SUBFOLDER && cd /var/www/$DOMAIN/$DEPLOY_SUBFOLDER && git clone $GITHUB init'"
         # also need to make this "init" release a symbolic link to /var/www/$DOMAIN/current - and we will need to adjust nginx conf too!
         printf "=========== Making /var/www/$DOMAIN/current a symbolic link to /var/www/$DOMAIN/$DEPLOY_SUBFOLDER/init\n"
         su - $OWNER_USER -c "bash -c 'cd /var/www/$DOMAIN && ln -s /var/www/$DOMAIN/$DEPLOY_SUBFOLDER/init current'"
+        # Make dockerlocal logs so nginx and php dont complain
+        su - $OWNER_USER -c "bash -c 'mkdir -p /var/www/$DOMAIN/current/DockerLocal/logs'"
+        su - $OWNER_USER -c "bash -c 'mkdir -p /var/www/$DOMAIN/current/logs'"
     fi
-    # bc the user might have to type an ssh password, i need to switch to the owner user to do this
-    su - $OWNER_USER -c "bash -c 'cd /var/www/ && git clone $GITHUB $DOMAIN'"
-    # switch back to original user
-    sudo su $ORIGINAL_USER
 else
     su -c "cd /var/www/ && mkdir $DOMAIN" "$OWNER_USER"
     printf "=========== 👉 Without a github repo or ssh setup, you are responsible for putting your files into /var/www/$DOMAIN\n"
@@ -408,13 +410,10 @@ else
     sudo su $ORIGINAL_USER
 fi
 
-mkdir -p "/var/www/$DOMAIN/DockerLocal/logs"
-mkdir -p "/var/www/$DOMAIN/logs"
-
 # globalize a gitignore for anything in /var/www/ that has DockerLocal/logs
 if [ ! -f "/var/www/.gitignore" ]; then
     printf "=========== Creating a global gitignore for /var/www/ to ignore DockerLocal/logs\n"
-    echo "DockerLocal/logs" > /var/www/.gitignore
+    su - $OWNER_USER -c "bash -c 'echo \"DockerLocal/logs\" > /var/www/.gitignore'"
 fi
 
 # NGINX - Vueapp or PHP?
@@ -575,7 +574,9 @@ then
             read -p "Your mysql root pass, ie: 1234 $cr" MYSQL_ROOT_PASS
         fi
 
+        printf "============ Creating mysql database: $DATABASE_NAME\n"
         mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASS -e "CREATE DATABASE ${DATABASE_NAME};"
+        printf "============ Creating mysql user: $DATABASE_USER\n"
         mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON ${DATABASE_NAME}.* TO '${DATABASE_USER}'@'localhost' IDENTIFIED BY '${DATABASE_PASS}';"
 
     fi
