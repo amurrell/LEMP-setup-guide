@@ -13,18 +13,221 @@ if [ ! -d "/etc/nginx" ]; then
     exit 1
 fi
 
+ORIGINAL_ARG_COUNT=$#
+
+# For all prompts below, make switches for them all so that they dont need prompts
+#
+# ie: ./setup-site \
+#   --domain=mysite.com \
+#   --github=git@github... \
+#   --deploy-subfolder=releases \
+#   --web-root-path=app/dist \
+#   --owner-user=ubuntu \
+#   --deploy-key-public-file=path-to-key \
+#   --deploy-key-private-file=path-to-key \
+#   --php-pools=true \
+#   --nginx-with-php=true \
+#   --nginx-site-conf-path=/var/www/LEMP-setup-guide/config/site.nginx.conf (or site.vueapp.nginx.conf) \
+#   --php-with-mysql=true \
+#   --php-site-conf-path=/var/www/LEMP-setup-guide/config/site.php-fpm.conf \
+#   --mysql-create-db=true \
+#   --mysql-root-user=root \
+#   --mysql-root-pass=1234 \
+#   --database-name=site_com \
+#   --database-user=site.com \
+#   --database-pass=cRaZyPaSs \
+#   --database-host=localhost \
+#   --database-port=3306
+
+# Default values (can be overwritten by passed parameters)
+DOMAIN=""
+GITHUB=""
+DEPLOY_SUBFOLDER=""
+WEB_ROOT_PATH=false
+OWNER_USER=$(whoami)
+ORIGINAL_USER=$(whoami)
+DEPLOY_KEY_PUBLIC=false
+DEPLOY_KEY_PRIVATE=false
+PHP_POOLS=false
+NGINX_WITH_PHP=false
+NGINX_SITE_CONF_PATH=""
+PHP_WITH_MYSQL=false
+PHP_SITE_CONF_PATH=""
+MYSQL_CREATE_DB=false
+MYSQL_ROOT_USER=""
+MYSQL_ROOT_PASS=""
+DATABASE_NAME=""
+DATABASE_USER=""
+DATABASE_PASS=""
+DATABASE_HOST="localhost"
+DATABASE_PORT=3306
+
+help_message() {
+    echo "Usage: ./setup-site [OPTIONS]"
+    echo
+    echo "Options:"
+    printf "  --domain=DOMAIN_NAME              Specify domain eg. --domain=mysite.com\n"
+    printf "  --github=GITHUB_REPO              Specify github repo using ssh eg. --github=git@github.com:youruser/yourrepo.git\n"
+    printf "  --deploy-subfolder=false          Specify if you want to deploy a subfolder of the repo; default is false; otherwise put path eg. releases\n"
+    printf "  --web-root-path=PATH              Specify the path to the web root path within your "domain" folder or repo; the default is blank - so index file should be directly in the folder.\n"
+    printf "  --owner-user=USER                 Specify the owner user (used for deploy & ssh key ownership); default is whoami result\n"
+    printf "  --deploy-key-public-file=PATH     Specify the path to the public deploy key file\n"
+    printf "  --deploy-key-private-file=PATH    Specify the path to the private deploy key file\n"
+    printf "  --php-pools=true|false            Specify if you want to setup php pools; default is false\n"
+    printf "  --nginx-with-php=true|false       Specify if you want to setup nginx with php upstreams; default is false\n"
+    printf "  --nginx-site-conf-path=PATH       Specify the path to the nginx site conf file; default is /var/www/LEMP-setup-guide/config/site.nginx.conf  (or site.vueapp.nginx.conf)\n"
+    printf "  --php-with-mysql=true|false       Specify if you want to setup php with mysql env vars; default is false\n"
+    printf "  --php-site-conf-path=PATH         Specify the path to the php site conf file; default is /var/www/LEMP-setup-guide/config/site.php-fpm.conf\n"
+    printf "  --mysql-create-db=true|false      Specify if you want to setup mysql database; default is false\n"
+    printf "  --mysql-root-user=USER            Specify the mysql root user; default is root\n"
+    printf "  --mysql-root-pass=PASS            Specify the mysql root pass; default is 1234\n"
+    printf "  --database-name=NAME              Specify the database name\n"
+    printf "  --database-user=USER              Specify the database user\n"
+    printf "  --database-pass=PASS              Specify the database password\n"
+    printf "  --database-host=HOST              Specify the database host; default is localhost\n"
+    printf "  --database-port=PORT              Specify the database port; default is 3306\n"
+    printf "  --help                            Display this help message and exit\n"
+}
+
+while [[ $# -gt 0 ]]; do
+    key="$1"
+    case $key in
+        --domain=*)
+        DOMAIN="${key#*=}"
+        shift
+        ;;
+        --github=*)
+        GITHUB="${key#*=}"
+        shift
+        ;;
+        --deploy-subfolder=*)
+        DEPLOY_SUBFOLDER="${key#*=}"
+        shift
+        ;;
+        --web-root-path=*)
+        WEB_ROOT_PATH="${key#*=}"
+        shift
+        ;;
+        --owner-user=*)
+        # if the user exists
+        if id "${key#*=}" >/dev/null 2>&1; then
+            OWNER_USER="${key#*=}"
+        fi
+        shift
+        ;;
+        --deploy-key-public-file=*)
+        # if the file exists, read it in
+        if [ -f "${key#*=}" ]; then
+            DEPLOY_KEY_PUBLIC=$(cat "${key#*=}")
+        fi
+        # if this key is set to null set deploy key to null
+        if [ "${key#*=}" == "null" ]; then
+            DEPLOY_KEY_PUBLIC=null
+        fi
+        shift
+        ;;
+        --deploy-key-private-file=*)
+        # if the file exists, read it in
+        if [ -f "${key#*=}" ]; then
+            DEPLOY_KEY_PRIVATE=$(cat "${key#*=}")
+        fi
+        # if this key is set to null set deploy key to null
+        if [ "${key#*=}" == "null" ]; then
+            DEPLOY_KEY_PRIVATE=null
+        fi
+        shift
+        ;;
+        --php-pools=*)
+        PHP_POOLS="${key#*=}"
+        shift
+        ;;
+        --nginx-with-php=*)
+        NGINX_WITH_PHP="${key#*=}"
+        shift
+        ;;
+        --nginx-site-conf-path=*)
+        NGINX_SITE_CONF_PATH="${key#*=}"
+        shift
+        ;;
+        --php-with-mysql=*)
+        PHP_WITH_MYSQL="${key#*=}"
+        shift
+        ;;
+        --php-site-conf-path=*)
+        PHP_SITE_CONF_PATH="${key#*=}"
+        shift
+        ;;
+        --mysql-create-db=*)
+        MYSQL_CREATE_DB="${key#*=}"
+        shift
+        ;;
+        --mysql-root-user=*)
+        MYSQL_ROOT_USER="${key#*=}"
+        shift
+        ;;
+        --mysql-root-pass=*)
+        MYSQL_ROOT_PASS="${key#*=}"
+        shift
+        ;;
+        --database-name=*)
+        DATABASE_NAME="${key#*=}"
+        shift
+        ;;
+        --database-user=*)
+        DATABASE_USER="${key#*=}"
+        shift
+        ;;
+        --database-pass=*)
+        DATABASE_PASS="${key#*=}"
+        shift
+        ;;
+        --database-host=*)
+        DATABASE_HOST="${key#*=}"
+        shift
+        ;;
+        --database-port=*)
+        DATABASE_PORT="${key#*=}"
+        shift
+        ;;
+        --help)
+        help_message
+        exit 0
+        ;;
+        *)
+        # Unknown option
+        echo "Unknown option: $key"
+        help_message
+        exit 1
+        ;;
+    esac
+done
+
+## SSH_PATH
+# if OWNER_USER is the same as whoami, then we can use the ssh keys in ${SSH_PATH}
+if [ "$OWNER_USER" == "$(whoami)" ]; then
+    SSH_PATH=$(echo ~)/.ssh
+else
+    # get home directory of $OWNER_USER
+    OWNER_HOME=$(getent passwd "$OWNER_USER" | cut -d: -f6)
+    SSH_PATH="$OWNER_HOME"/.ssh
+fi
+
 # Prompt for things
-## Set up a site?
-read -p "Do you want to setup a site? " -n 1 -r
-echo    # (optional) move to a new line
-if [[ ! $REPLY =~ ^[Yy]$ ]]
-then
-    printf "Okay, stopping script. Things are installed... carry on. Set up a site later using ./setup-site in scripts folder.\n"
-    exit 1;
+
+## Set up a site? Ask only if no options are passed
+if [[ $ORIGINAL_ARG_COUNT -eq 0 ]]; then
+    read -p "Do you want to setup a site? " -n 1 -r
+    echo    # (optional) move to a new line
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        printf "Okay, stopping script. Things are installed... carry on. Set up a site later using ./setup-site in scripts folder.\n"
+        exit 1
+    fi
 fi
 
 ## D - Domain
-read -p "Your Domain, ie: yoursite.com $cr" DOMAIN
+if [ -z "$DOMAIN" ]; then
+    read -p "Your Domain, ie: yoursite.com $cr" DOMAIN
+fi
 
 if [ "$DOMAIN" == '' ]; then
     printf "You must specify a domain, ie: yoursite.com\n"
@@ -42,69 +245,238 @@ DOMAIN_COM=$(cat tempdomain.txt)
 rm tempdomain.txt
 
 # PROMPT - Github Repo URL
-read -p "Your Github/Bitbucket Repo (use ssh url git@github.com:youruser/yourrepo.git):" GITHUB
-
-# SSH - check it exists?
-if [ ! -d "/root/.ssh" ]; then
-    printf "You do not have an ~/.ssh folder, so worried that you don't have this setup properly\n"
-    printf "If using a git repo, probably use the HTTPS url.\n"
+if [ -z "$GITHUB" ]; then
+    read -p "Your Github/Bitbucket Repo (use ssh url git@github.com:youruser/yourrepo.git):" GITHUB
 fi
 
-# SSH - check for ssh-add -L to see if we have ssh keys loaded (from port forwarding or ssh-agent in docker)
-if [ -d "/root/.ssh" ]; then
-    ssh-add -L | grep 'Could not open a connection to your authentication agent' &> /dev/null
-    if [ $? == 0 ]; then
-        printf "here i am\n"
-        WHO=$('whoami')
-        cp /root/tempssh/* /root/.ssh/ -R
-        chown $WHO:$WHO ~/.ssh/* -R
-        eval `ssh-agent -s`
-        ssh-add
+# PROMPT - Deploy Subfolder - prompt if = ""
+if [ -z "$DEPLOY_SUBFOLDER" ]; then
+    read -p "Your Deploy Subfolder (if you want to deploy a subfolder of the repo); press enter to skip:" DEPLOY_SUBFOLDER
+    if [ "$DEPLOY_SUBFOLDER" == '' ]; then
+        DEPLOY_SUBFOLDER=false
     fi
 fi
 
-# GIT REPO - setup a git repo if we have ssh
-if [ ! "$GITHUB" == "" ] && [ -d "/root/.ssh" ]; then
-    cd /var/www
-    git clone "$GITHUB" "$DOMAIN"
-else
-    cd /var/www/
-    mkdir "$DOMAIN"
-    printf "Without a github repo or ssh setup, you are responsible for putting your files into /var/www/$DOMAIN\n"
+# PROMPT - Web Root Path - prompt if = false
+if [ "$WEB_ROOT_PATH" == false ]; then
+    read -p "Your Web Root Path (relative to repo or domain folder - eg. html or app/dist; press enter to leave blank:" WEB_ROOT_PATH
+    if [ "$WEB_ROOT_PATH" == '' ]; then
+        WEB_ROOT_PATH=""
+    fi
 fi
 
-mkdir -p "/var/www/$DOMAIN/DockerLocal/logs"
-mkdir -p "/var/www/$DOMAIN/logs"
+# if WEB_ROOT_PATH=null, then set to ""
+if [ "$WEB_ROOT_PATH" == null ]; then
+    WEB_ROOT_PATH=""
+fi
+
+# Extract repo name from the github URL
+get_repo_name() {
+    local url="$1"
+    echo "$url" | cut -d'/' -f 2 | cut -d'.' -f 1
+}
+
+# Add to ssh config file to ensure this host uses the correct key for the repo
+setup_repo_ssh_with_deployment_key() {
+    local repo_name="$1"
+    printf "============ Add to ssh config file to ensure this host uses the correct key for the repo\n"
+    mkdir -p "$SSH_PATH"
+
+    # if the config file doesnt exist, touch it as owner user
+    if [ ! -f "${SSH_PATH}/config" ]; then
+        su - $OWNER_USER -c "bash -c 'touch ${SSH_PATH}/config'"
+    fi
+
+    # append this config to SSH_PATH/config as owneruser
+    # Host github.com-${repo_name}
+    #    Hostname github.com
+    #    IdentityFile=${SSH_PATH}/${repo_name}_deploy_key
+    #    IdentitiesOnly=yes
+    su - $OWNER_USER -c "bash -c 'echo -e \"\nHost github.com-${repo_name}\n\tHostname github.com\n\tIdentityFile=${SSH_PATH}/${repo_name}_deploy_key\n\tIdentitiesOnly=yes\" >> ${SSH_PATH}/config'"
+
+    # Alter GITHUB url to use the new host
+    GITHUB=$(echo "$GITHUB" | sed "s/github.com/github.com-${repo_name}/g")
+}
+
+# Save the deployment keys and fix their permissions
+save_and_fix_permissions() {
+    local repo_name="$1"
+    local public_key="$2"
+    local private_key="$3"
+
+    printf "============ Save the deployment keys and fix their permissions\n"
+
+    # do as OWNER USER
+    # echo "$public_key" > ${SSH_PATH}/${repo_name}_deploy_key.pub
+    # echo "$private_key" > ${SSH_PATH}/${repo_name}_deploy_key
+
+    su - $OWNER_USER -c "bash -c 'mkdir -p ${SSH_PATH}'"
+    su - $OWNER_USER -c "bash -c 'echo \"$public_key\" > ${SSH_PATH}/${repo_name}_deploy_key.pub'"
+    su - $OWNER_USER -c "bash -c 'echo \"$private_key\" > ${SSH_PATH}/${repo_name}_deploy_key'"
+
+    printf "============ Fix permissions on devop keys\n"
+    # do as OWNER USER
+    # chmod u=rw,go= ${SSH_PATH}/${repo_name}_deploy_key ${SSH_PATH}/${repo_name}_deploy_key.pub
+    su - $OWNER_USER -c "bash -c 'chmod u=rw,go= ${SSH_PATH}/${repo_name}_deploy_key ${SSH_PATH}/${repo_name}_deploy_key.pub'"
+}
+
+REPO_NAME=$(get_repo_name "$GITHUB")
+
+# either deployment key is exactly false
+if [ "$DEPLOY_KEY_PUBLIC" == false ] || [ "$DEPLOY_KEY_PRIVATE" == false ]; then
+    read -p "Do you have a deployment key for this repo? " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        printf "Paste your deploy public key, press enter, and press ctrl-d when done:\n"
+        DEPLOY_KEY_PUBLIC=$(cat)
+        printf "Paste your deploy private key, press enter, and press ctrl-d when done:\n"
+        DEPLOY_KEY_PRIVATE=$(cat)
+
+        save_and_fix_permissions "$REPO_NAME" "$DEPLOY_KEY_PUBLIC" "$DEPLOY_KEY_PRIVATE"
+        setup_repo_ssh_with_deployment_key "$REPO_NAME"
+    else
+        read -p "Do you want to make a deployment key and add it to your ssh config? " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            printf "============ Generating new deploy keys - using -t ed25519\n"
+            ssh-keygen -t ed25519 -f ${SSH_PATH}/${REPO_NAME}_deploy_key -q -N ""
+            printf "============ 📋 Reveal Devops Public Key - you need to paste into github deploy key in repo settings. Then run this setup site again.\n"
+            cat ${SSH_PATH}/${REPO_NAME}_deploy_key.pub
+            printf "============ 📋 Reveal Devops Private Key - you will need to answer with this when you run the script again.\n"
+            cat ${SSH_PATH}/${REPO_NAME}_deploy_key
+
+            setup_repo_ssh_with_deployment_key "$REPO_NAME"
+        else
+            printf "============ ✋ Okay, stopping moving on. We will try to use ssh agent forwarding or other means then...\n"
+        fi
+    fi
+    # github is set, deploy keys length is at least 10
+elif [ ! -z "$GITHUB" ] && [ ${#DEPLOY_KEY_PUBLIC} -gt 10 ] && [ ${#DEPLOY_KEY_PRIVATE} -gt 10 ]; then
+    save_and_fix_permissions "$REPO_NAME" "$DEPLOY_KEY_PUBLIC" "$DEPLOY_KEY_PRIVATE"
+    setup_repo_ssh_with_deployment_key "$REPO_NAME"
+else
+    printf "============ Skipping deployment key handling as it seems it's not being used...\n"
+fi
+
+# SSH - use SSH agent forwarding - only if we dont have ${SSH_PATH}/${REPO_NAME}_deploy_key
+if [ ! -f ${SSH_PATH}/${REPO_NAME}_deploy_key ]; then
+
+    # if we are using SimpleDocker to test this script, we will have a shared volume of tempssh to forward the keys
+    if [ -d ${SSH_PATH} ]; then
+
+        # SSH - check for ssh-add -L to see if we have ssh keys loaded (from port forwarding or ssh-agent in docker)
+        ssh-add -L | grep 'Could not open a connection to your authentication agent' &> /dev/null
+        if [ $? == 0 ]; then
+            printf "=========== Trying to copy over a possible /root/tempssh if running in SimpleDocker\n"
+            WHO=$('whoami')
+            cp /root/tempssh/* /root/.ssh/ -R
+            chown $WHO:$WHO ${SSH_PATH}/* -R
+            eval `ssh-agent -s`
+            ssh-add
+        fi
+
+        # if the github var does not start with https and still dont have a path
+        if [[ ! $GITHUB =~ ^https.* ]] && [ -d ${SSH_PATH} ]; then
+            printf "$OWNER_USER does not have an ${SSH_PATH} folder... worried that it is not setup properly\n"
+            printf "If using a git repo, probably use the HTTPS url instead.\n"
+        fi
+    fi
+fi
+
+cd /var/www
+
+# GIT REPO - setup a git repo if we have GITHUB AND (ssh folder exists OR we have a deploy key at .ssh/${REPO_NAME}_deploy_key)
+if [ ! -z "$GITHUB" ] && ([ -d ${SSH_PATH} ] || [ -f ${SSH_PATH}/${REPO_NAME}_deploy_key ]); then
+    if [ "$DEPLOY_SUBFOLDER" == false ]; then
+        printf "=========== Cloning $GITHUB into /var/www/$DOMAIN\n"
+        su - $OWNER_USER -c "bash -c 'cd /var/www/ && git clone $GITHUB $DOMAIN'"
+        # dockerlocal logs
+        su - $OWNER_USER -c "bash -c 'mkdir -p /var/www/$DOMAIN/DockerLocal/logs'"
+        su - $OWNER_USER -c "bash -c 'mkdir -p /var/www/$DOMAIN/logs'"
+    else
+        printf "=========== Cloning $GITHUB into /var/www/$DOMAIN/$DEPLOY_SUBFOLDER/init\n"
+        su - $OWNER_USER -c "bash -c 'mkdir -p /var/www/$DOMAIN/$DEPLOY_SUBFOLDER && cd /var/www/$DOMAIN/$DEPLOY_SUBFOLDER && git clone $GITHUB init'"
+        # also need to make this "init" release a symbolic link to /var/www/$DOMAIN/current - and we will need to adjust nginx conf too!
+        printf "=========== Making /var/www/$DOMAIN/current a symbolic link to /var/www/$DOMAIN/$DEPLOY_SUBFOLDER/init\n"
+        su - $OWNER_USER -c "bash -c 'cd /var/www/$DOMAIN && ln -s /var/www/$DOMAIN/$DEPLOY_SUBFOLDER/init current'"
+        # Make dockerlocal logs so nginx and php dont complain
+        su - $OWNER_USER -c "bash -c 'mkdir -p /var/www/$DOMAIN/current/DockerLocal/logs'"
+        su - $OWNER_USER -c "bash -c 'mkdir -p /var/www/$DOMAIN/current/logs'"
+    fi
+else
+    su -c "cd /var/www/ && mkdir $DOMAIN" "$OWNER_USER"
+    printf "=========== 👉 Without a github repo or ssh setup, you are responsible for putting your files into /var/www/$DOMAIN\n"
+    # switch back to original user
+    sudo su $ORIGINAL_USER
+fi
+
+# globalize a gitignore for anything in /var/www/ that has DockerLocal/logs
+if [ ! -f "/var/www/.gitignore" ]; then
+    printf "=========== Creating a global gitignore for /var/www/ to ignore DockerLocal/logs\n"
+    su - $OWNER_USER -c "bash -c 'echo \"DockerLocal/logs\" > /var/www/.gitignore'"
+fi
 
 # NGINX - Vueapp or PHP?
-read -p "Do you need to setup nginx with upstreams and php?" -n 1 -r
-echo    # (optional) move to a new line
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
-    # Create nginx site config with PHP upstreams
-    cp /var/www/LEMP-setup-guide/config/site.nginx.conf /etc/nginx/sites-available/"$DOMAIN.conf"
-    cd /etc/nginx/sites-available/
-    sed -i "s/SITEDOTCOM/${DOMAIN}/g;" "$DOMAIN.conf"
-    sed -i "s/SITE_COM/${DOMAIN_COM}/g;" "$DOMAIN.conf"
-    ln -s /etc/nginx/sites-available/"${DOMAIN}.conf" /etc/nginx/sites-enabled/
-else
-    # Create nginx config with vueapp
-    cp /var/www/LEMP-setup-guide/config/site.nginx.vueapp.conf /etc/nginx/sites-available/"$DOMAIN.conf"
-    cd /etc/nginx/sites-available/
-    sed -i "s/SITEDOTCOM/${DOMAIN}/g;" "$DOMAIN.conf"
-    sed -i "s/SITE_COM/${DOMAIN_COM}/g;" "$DOMAIN.conf"
-    ln -s /etc/nginx/sites-available/"${DOMAIN}.conf" /etc/nginx/sites-enabled/
+if [ -z "$NGINX_WITH_PHP" ]; then
+    read -p "Do you need to setup nginx with upstreams and php?" -n 1 -r
+    echo    # (optional) move to a new line
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        $NGINX_WITH_PHP = true
+    else
+        $NGINX_WITH_PHP = false
+    fi
 fi
+
+apply_nginx_config() {
+    local site_config_path="$1"
+    cp "$site_config_path" /etc/nginx/sites-available/"$DOMAIN.conf"
+    cd /etc/nginx/sites-available/
+    sed -i "s/SITEDOTCOM/${DOMAIN}/g" "$DOMAIN.conf"
+    sed -i "s/SITE_COM/${DOMAIN_COM}/g" "$DOMAIN.conf"
+    sed -i "s/WEBROOTPATH/${WEB_ROOT_PATH}/g" "$DOMAIN.conf"
+    ln -s /etc/nginx/sites-available/"${DOMAIN}.conf" /etc/nginx/sites-enabled/
+
+    # if we have DEPLOY_SUBFOLDER and therefore a "current" directory - then we need to sed some stuff in nginx
+    if [ "$DEPLOY_SUBFOLDER" != false ]; then
+        # For lines that do not contain '/var/www/${DOMAIN}/current', replace '/var/www/${DOMAIN}/' with '/var/www/${DOMAIN}/current/'
+        sed -i "/var\/www\/${DOMAIN}\/current/!s/var\/www\/${DOMAIN}\//var\/www\/${DOMAIN}\/current\//g" "$DOMAIN.conf"
+    fi
+}
+
+# (only) if NGINX_SITE_CONF_PATH is empty, does NGINX_WITH_PHP matter in determining the default used:
+if [ -z "$NGINX_SITE_CONF_PATH" ]; then
+    # if NGINX_WITH_PHP is true, then the default is site.nginx.php.conf
+    if [ "$NGINX_WITH_PHP" == true ]; then
+        NGINX_SITE_CONF_PATH="/var/www/LEMP-setup-guide/config/site.nginx.conf"
+    else
+        # use vueapp version
+        NGINX_SITE_CONF_PATH="/var/www/LEMP-setup-guide/config/site.vueapp.nginx.conf"
+    fi
+fi
+
+apply_nginx_config "$NGINX_SITE_CONF_PATH"
 
 # TEST nginx
 sudo nginx -t
-# Try to reload nginx
-sudo service nginx reload
+# Try to reload nginx only if the test was successful
+if [ $? == 0 ]; then
+    sudo service nginx reload
+else
+    printf "============ ❌ Nginx test failed, not reloading nginx\n"
+fi
 
 # No PHP?
-read -p "Do you need to set up PHP FPM pools?" -n 1 -r
-echo    # (optional) move to a new line
-if [[ ! $REPLY =~ ^[Yy]$ ]]
+if [ -z "$PHP_POOLS" ]; then
+    read -p "Do you need to set up PHP FPM pools?" -n 1 -r
+    echo    # (optional) move to a new line
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        $PHP_POOLS = true
+    else
+        $PHP_POOLS = false
+    fi
+fi
+
+if [ "$PHP_POOLS" == false ];
 then
     printf "Okay, stopping script then.\n"
     exit 1
@@ -112,27 +484,59 @@ fi
 
 # Create php site config
 mkdir -p /etc/php/${PHP_VERSION}/fpm/pool.d/
-cp /var/www/LEMP-setup-guide/config/site.php-fpm.conf /etc/php/${PHP_VERSION}/fpm/pool.d/"$DOMAIN.conf"
+# if PHP_SITE_CONF_PATH is set, use it, otherwise use the default
+if [ -z "$PHP_SITE_CONF_PATH" ]; then
+    PHP_SITE_CONF_PATH="/var/www/LEMP-setup-guide/config/site.php-fpm.conf"
+fi
+cp "$PHP_SITE_CONF_PATH" "/etc/php/${PHP_VERSION}/fpm/pool.d/${DOMAIN}.conf"
 cd /etc/php/${PHP_VERSION}/fpm/pool.d/
 sed -i "s/SITEDOTCOM/${DOMAIN}/g;" "$DOMAIN.conf"
 sed -i "s/SITE_COM/${DOMAIN_COM}/g;" "$DOMAIN.conf"
 
+# if we have DEPLOY_SUBFOLDER and therefore a "current" directory - then we need to sed some stuff in PHP
+if [ "$DEPLOY_SUBFOLDER" != false ]; then
+    # For lines that do not contain '/var/www/${DOMAIN}/current', replace '/var/www/${DOMAIN}/' with '/var/www/${DOMAIN}/current/'
+    sed -i "/var\/www\/${DOMAIN}\/current/!s/var\/www\/${DOMAIN}\//var\/www\/${DOMAIN}\/current\//g" "$DOMAIN.conf"
+fi
+
 # PROMPT for PHP ENV VARS
-read -p "Do you want to setup PHP environmental variables for a mysql database? " -n 1 -r
-echo    # (optional) move to a new line
-if [[ $REPLY =~ ^[Yy]$ ]]
+if [ -z "$PHP_WITH_MYSQL" ]; then
+    read -p "Do you want to setup PHP environmental variables for a mysql database? " -n 1 -r
+    echo    # (optional) move to a new line
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        $PHP_WITH_MYSQL = true
+    else
+        $PHP_WITH_MYSQL = false
+    fi
+fi
+
+if [ "$PHP_WITH_MYSQL" == true ];
 then
 
     # PROMPT for DATABASE_NAME
-    read -p "Your database name, ie: site_com: $cr" DATABASE_NAME
+    if [ -z "$DATABASE_NAME" ]; then
+        read -p "Your database name, ie: site_com: $cr" DATABASE_NAME
+    fi
+
     # PROMPT for DATABASE_USER
-    read -p "Your database user, ie: site.com $cr" DATABASE_USER
+    if [ -z "$DATABASE_USER" ]; then
+        read -p "Your database user, ie: site.com $cr" DATABASE_USER
+    fi
+
     # PROMPT for DATABASE_PASS
-    read -p "Your database password, ie: cRaZyPaSs $cr" DATABASE_PASS
+    if [ -z "$DATABASE_PASS" ]; then
+        read -p "Your database password, ie: cRaZyPaSs $cr" DATABASE_PASS
+    fi
+
     # PROMPT for DATABASE_HOST
-    read -p "Your database host, ie: localhost $cr" DATABASE_HOST
+    if [ -z "$DATABASE_HOST" ]; then
+        read -p "Your database host, ie: localhost $cr" DATABASE_HOST
+    fi
+
     # PROMPT for DATABASE_PORT
-    read -p "Your database host, ie: 3306 $cr" DATABASE_PORT
+    if [ -z "$DATABASE_PORT" ]; then
+        read -p "Your database host, ie: 3306 $cr" DATABASE_PORT
+    fi
 
 
     sed -i "s/DATABASENAME/${DATABASE_NAME}/g;" "$DOMAIN.conf"
@@ -147,19 +551,33 @@ then
     # restart php
     sudo service php${PHP_VERSION}-fpm reload
 
-    read -p "Do you want to setup a local mysql database using the info for php env vars above? " -n 1 -r
-    echo    # (optional) move to a new line
-    if [[ $REPLY =~ ^[Yy]$ ]]
+    if [ -z "$MYSQL_CREATE_DB" ]; then
+        read -p "Do you want to setup a local mysql database using the info for php env vars above? " -n 1 -r
+        echo    # (optional) move to a new line
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            $MYSQL_CREATE_DB = true
+        else
+            $MYSQL_CREATE_DB = false
+        fi
+    fi
+
+    if [ "$MYSQL_CREATE_DB" == true ];
     then
 
-        # PROMPT for MYSQLROOTUSER
-        read -p "Your mysql root user, ie: root $cr" MYSQLROOTUSER
+        # PROMPT for MYSQL_ROOT_USER
+        if [ -z "$MYSQL_ROOT_USER" ]; then
+            read -p "Your mysql root user, ie: root $cr" MYSQL_ROOT_USER
+        fi
 
-        # PROMPT for MYSQLROOTPASS
-        read -p "Your mysql root pass, ie: 1234 $cr" MYSQLROOTPASS
+        # PROMPT for MYSQL_ROOT_PASS
+        if [ -z "$MYSQL_ROOT_PASS" ]; then
+            read -p "Your mysql root pass, ie: 1234 $cr" MYSQL_ROOT_PASS
+        fi
 
-        mysql -u $MYSQLROOTUSER -p$MYSQLROOTPASS -e "CREATE DATABASE ${DATABASE_NAME};"
-        mysql -u $MYSQLROOTUSER -p$MYSQLROOTPASS -e "GRANT ALL PRIVILEGES ON ${DATABASE_NAME}.* TO '${DATABASE_USER}'@'localhost' IDENTIFIED BY '${DATABASE_PASS}';"
+        printf "============ Creating mysql database: $DATABASE_NAME\n"
+        mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASS -e "CREATE DATABASE ${DATABASE_NAME};"
+        printf "============ Creating mysql user: $DATABASE_USER\n"
+        mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON ${DATABASE_NAME}.* TO '${DATABASE_USER}'@'localhost' IDENTIFIED BY '${DATABASE_PASS}';"
 
     fi
 fi
