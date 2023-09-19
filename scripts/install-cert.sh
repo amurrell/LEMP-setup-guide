@@ -1,3 +1,58 @@
+#!/usr/bin/env bash
+
+# Define Funcs
+extract_webroot_path() {
+    local domain="$1"
+    local nginx_conf_path="$2"
+
+    # Ensure domain and nginx_conf_path are provided
+    if [[ -z "$domain" || -z "$nginx_conf_path" ]]; then
+        echo "Error: Either domain or nginx_conf_path is not provided."
+        return 1
+    fi
+
+    local result=$(grep -o "root /var/www/$domain[^;]*;" $nginx_conf_path)
+
+    local webrootpath="${result#*"$domain"}"
+    webrootpath="${webrootpath%;}"
+
+    # Check if webrootpath starts with /current and remove it if it does
+    if [[ $webrootpath == /current* ]]; then
+        webrootpath="${webrootpath#/current}"
+    fi
+
+    # Print the webrootpath
+    echo "$webrootpath"
+}
+
+fix_root_path() {
+    local domain="$1"
+    local nginx_conf_path="$2"
+
+    # Ensure domain and nginx_conf_path are provided
+    if [[ -z "$domain" || -z "$nginx_conf_path" ]]; then
+        echo "Error: Either domain or nginx_conf_path is not provided."
+        return 1
+    fi
+
+    # Read the 'root' line from the provided nginx configuration file
+    local root_line=$(sed -n '/^[ \t]*root [^;]*;/p' "$nginx_conf_path")
+
+    printf "========== ROOT LINE\n"
+    printf "$root_line\n"
+
+    # Remove double slashes and trailing slash before the semicolon
+    local modified_line=$(echo "$root_line" | sed 's#//\+#/#g' | sed 's#/\(;\)$#\1#')
+    printf "========== MODIFIED ROOT LINE\n"
+    printf "$modified_line\n"
+
+    # Use sed to replace root_line with modified_line in the provided nginx configuration file
+    sed -i "s#$(echo "$root_line" | sed 's#[\&/\.]#\\&#g')#$modified_line#g" "$nginx_conf_path"
+
+    printf "========== AFTER SED\n"
+    cat "$nginx_conf_path"
+}
+
 # check for certbot
 if ! [ -x "$(command -v certbot)" ]; then
   sudo apt-get update
@@ -95,6 +150,9 @@ then
   DOMAIN_COM=$(cat tempdomain.txt)
   rm tempdomain.txt
 
+  # Get Web Root Path for replacing in nginx config
+  WEBROOTPATH=$(extract_webroot_path "$DOMAIN" "/etc/nginx/sites-available/$DOMAIN.conf")
+
   rm /etc/nginx/sites-available/"$DOMAIN.conf"
 
   # NGINX - Proxy or not to proxy?
@@ -110,9 +168,10 @@ then
   fi
 
   cd /etc/nginx/sites-available/
+
   sed -i "s/SITEDOTCOM/${DOMAIN}/g;" "$DOMAIN.conf"
   sed -i "s/SITE_COM/${DOMAIN_COM}/g;" "$DOMAIN.conf"
-  sed -i "s/WEBROOTPATH/${WEBROOTPATH}/g;" "$DOMAIN.conf"
+  sed -i "s|WEBROOTPATH|${WEBROOTPATH}|g;" "$DOMAIN.conf"
 
   # nginx - handle current path stuff -
   # if /var/www/$DOMAIN/current exists, need to sed nginx config to swap paths
@@ -120,6 +179,9 @@ then
     # For lines that do not contain '/var/www/${DOMAIN}/current', replace '/var/www/${DOMAIN}/' with '/var/www/${DOMAIN}/current/'
     sed -i "/var\/www\/${DOMAIN}\/current/!s/var\/www\/${DOMAIN}\//var\/www\/${DOMAIN}\/current\//g" "$DOMAIN.conf"
   fi
+
+  # Fix possible issues in root path
+  fix_root_path "$DOMAIN" "$DOMAIN.conf"
 
   # This may already exist...
   ln -s /etc/nginx/sites-available/"${DOMAIN}.conf" /etc/nginx/sites-enabled/

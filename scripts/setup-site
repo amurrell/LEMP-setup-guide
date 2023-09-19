@@ -202,6 +202,34 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+fix_root_path() {
+    local domain="$1"
+    local nginx_conf_path="$2"
+
+    # Ensure domain and nginx_conf_path are provided
+    if [[ -z "$domain" || -z "$nginx_conf_path" ]]; then
+        echo "Error: Either domain or nginx_conf_path is not provided."
+        return 1
+    fi
+
+    # Read the 'root' line from the provided nginx configuration file
+    local root_line=$(sed -n '/^[ \t]*root [^;]*;/p' "$nginx_conf_path")
+
+    printf "========== ROOT LINE\n"
+    printf "$root_line\n"
+
+    # Remove double slashes and trailing slash before the semicolon
+    local modified_line=$(echo "$root_line" | sed 's#//\+#/#g' | sed 's#/\(;\)$#\1#')
+    printf "========== MODIFIED ROOT LINE\n"
+    printf "$modified_line\n"
+
+    # Use sed to replace root_line with modified_line in the provided nginx configuration file
+    sed -i "s#$(echo "$root_line" | sed 's#[\&/\.]#\\&#g')#$modified_line#g" "$nginx_conf_path"
+
+    printf "========== AFTER SED\n"
+    cat "$nginx_conf_path"
+}
+
 ## SSH_PATH
 # if OWNER_USER is the same as whoami, then we can use the ssh keys in ${SSH_PATH}
 if [ "$OWNER_USER" == "$(whoami)" ]; then
@@ -433,7 +461,7 @@ apply_nginx_config() {
     cd /etc/nginx/sites-available/
     sed -i "s/SITEDOTCOM/${DOMAIN}/g" "$DOMAIN.conf"
     sed -i "s/SITE_COM/${DOMAIN_COM}/g" "$DOMAIN.conf"
-    sed -i "s/WEBROOTPATH/${WEB_ROOT_PATH}/g" "$DOMAIN.conf"
+    sed -i "s|WEBROOTPATH|${WEB_ROOT_PATH}|g" "$DOMAIN.conf"
     ln -s /etc/nginx/sites-available/"${DOMAIN}.conf" /etc/nginx/sites-enabled/
 
     # if we have DEPLOY_SUBFOLDER and therefore a "current" directory - then we need to sed some stuff in nginx
@@ -441,6 +469,9 @@ apply_nginx_config() {
         # For lines that do not contain '/var/www/${DOMAIN}/current', replace '/var/www/${DOMAIN}/' with '/var/www/${DOMAIN}/current/'
         sed -i "/var\/www\/${DOMAIN}\/current/!s/var\/www\/${DOMAIN}\//var\/www\/${DOMAIN}\/current\//g" "$DOMAIN.conf"
     fi
+
+    # fix root path
+    fix_root_path "$DOMAIN" "$DOMAIN.conf"
 }
 
 # (only) if NGINX_SITE_CONF_PATH is empty, does NGINX_WITH_PHP matter in determining the default used:
