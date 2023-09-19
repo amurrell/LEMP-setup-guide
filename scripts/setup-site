@@ -48,7 +48,7 @@ OWNER_USER=$(whoami)
 ORIGINAL_USER=$(whoami)
 DEPLOY_KEY_PUBLIC=false
 DEPLOY_KEY_PRIVATE=false
-PHP_POOLS=false
+PHP_POOLS=""
 NGINX_WITH_PHP=""
 NGINX_SITE_CONF_PATH=""
 PHP_WITH_MYSQL=false
@@ -139,6 +139,10 @@ while [[ $# -gt 0 ]]; do
         ;;
         --php-pools=*)
         PHP_POOLS="${key#*=}"
+        # make sure it is either true or false if passed
+        if [ "$PHP_POOLS" != "true" ] && [ "$PHP_POOLS" != "false" ]; then
+            PHP_POOLS=false
+        fi
         shift
         ;;
         --nginx-with-php=*)
@@ -505,9 +509,9 @@ if [ -z "$PHP_POOLS" ]; then
     read -p "Do you need to set up PHP FPM pools?" -n 1 -r
     echo    # (optional) move to a new line
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        $PHP_POOLS = true
+        PHP_POOLS=true
     else
-        $PHP_POOLS = false
+        PHP_POOLS=false
     fi
 fi
 
