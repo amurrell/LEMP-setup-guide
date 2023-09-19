@@ -131,7 +131,7 @@ The following scripts are used "per site" that you want to setup on your server.
    --deploy-key-private-file=mysite-deploy-key
    --php-pools=true
    --nginx-with-php=true
-   --nginx-site-conf-path=/var/www/LEMP-setup-guide/config/site.nginx.conf (or site.vueapp.nginx.conf)
+   --nginx-site-conf-path=/var/www/LEMP-setup-guide/config/site.nginx.conf (or site.nginx.vueapp.conf)
    --php-with-mysql=true
    --php-site-conf-path=/var/www/LEMP-setup-guide/config/site.php-fpm.conf
    --mysql-create-db=true
@@ -155,7 +155,7 @@ The following scripts are used "per site" that you want to setup on your server.
   | `--deploy-key-private-file=PATH`| Specify the path to the private deploy key file                                                                                                                       | None                                                              |
   | `--php-pools`                  | Specify if you want to set up PHP pools. Possible values: `true` or `false`                                                                                            | `false`                                                           |
   | `--nginx-with-php`             | Specify if you want to set up Nginx with PHP upstreams. Possible values: `true` or `false`                                                                             | `false`                                                           |
-  | `--nginx-site-conf-path=PATH`  | Specify the path to the Nginx site conf file                                                                                                                          | `/var/www/LEMP-setup-guide/config/site.nginx.conf` (or `site.vueapp.nginx.conf`) |
+  | `--nginx-site-conf-path=PATH`  | Specify the path to the Nginx site conf file                                                                                                                          | `/var/www/LEMP-setup-guide/config/site.nginx.conf` (or `site.nginx.vueapp.conf`) |
   | `--php-with-mysql`             | Specify if you want to set up PHP with MySQL env vars. Possible values: `true` or `false`                                                                              | `false`                                                           |
   | `--php-site-conf-path=PATH`    | Specify the path to the PHP site conf file                                                                                                                            | `/var/www/LEMP-setup-guide/config/site.php-fpm.conf`              |
   | `--mysql-create-db`            | Specify if you want to set up a MySQL database. Possible values: `true` or `false`                                                                                     | `false`                                                           |

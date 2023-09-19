@@ -38,19 +38,19 @@ fix_root_path() {
     # Read the 'root' line from the provided nginx configuration file
     local root_line=$(sed -n '/^[ \t]*root [^;]*;/p' "$nginx_conf_path")
 
-    printf "========== ROOT LINE\n"
-    printf "$root_line\n"
+    # printf "========== ROOT LINE\n"
+    # printf "$root_line\n"
 
     # Remove double slashes and trailing slash before the semicolon
     local modified_line=$(echo "$root_line" | sed 's#//\+#/#g' | sed 's#/\(;\)$#\1#')
-    printf "========== MODIFIED ROOT LINE\n"
-    printf "$modified_line\n"
+    # printf "========== MODIFIED ROOT LINE\n"
+    # printf "$modified_line\n"
 
     # Use sed to replace root_line with modified_line in the provided nginx configuration file
     sed -i "s#$(echo "$root_line" | sed 's#[\&/\.]#\\&#g')#$modified_line#g" "$nginx_conf_path"
 
-    printf "========== AFTER SED\n"
-    cat "$nginx_conf_path"
+    # printf "========== AFTER SED\n"
+    # cat "$nginx_conf_path"
 }
 
 # check for certbot
