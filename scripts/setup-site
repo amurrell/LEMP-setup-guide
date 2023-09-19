@@ -51,9 +51,9 @@ DEPLOY_KEY_PRIVATE=false
 PHP_POOLS=""
 NGINX_WITH_PHP=""
 NGINX_SITE_CONF_PATH=""
-PHP_WITH_MYSQL=false
+PHP_WITH_MYSQL=""
 PHP_SITE_CONF_PATH=""
-MYSQL_CREATE_DB=false
+MYSQL_CREATE_DB=""
 MYSQL_ROOT_USER=""
 MYSQL_ROOT_PASS=""
 DATABASE_NAME=""
@@ -159,6 +159,10 @@ while [[ $# -gt 0 ]]; do
         ;;
         --php-with-mysql=*)
         PHP_WITH_MYSQL="${key#*=}"
+        # make sure it is either true or false if passed
+        if [ "$PHP_WITH_MYSQL" != "true" ] && [ "$PHP_WITH_MYSQL" != "false" ]; then
+            PHP_WITH_MYSQL=false
+        fi
         shift
         ;;
         --php-site-conf-path=*)
@@ -167,6 +171,10 @@ while [[ $# -gt 0 ]]; do
         ;;
         --mysql-create-db=*)
         MYSQL_CREATE_DB="${key#*=}"
+        # make sure it is either true or false if passed
+        if [ "$MYSQL_CREATE_DB" != "true" ] && [ "$MYSQL_CREATE_DB" != "false" ]; then
+            MYSQL_CREATE_DB=false
+        fi
         shift
         ;;
         --mysql-root-user=*)
@@ -543,9 +551,9 @@ if [ -z "$PHP_WITH_MYSQL" ]; then
     read -p "Do you want to setup PHP environmental variables for a mysql database? " -n 1 -r
     echo    # (optional) move to a new line
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        $PHP_WITH_MYSQL = true
+        PHP_WITH_MYSQL=true
     else
-        $PHP_WITH_MYSQL = false
+        PHP_WITH_MYSQL=false
     fi
 fi
 
@@ -594,9 +602,9 @@ then
         read -p "Do you want to setup a local mysql database using the info for php env vars above? " -n 1 -r
         echo    # (optional) move to a new line
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            $MYSQL_CREATE_DB = true
+            MYSQL_CREATE_DB=true
         else
-            $MYSQL_CREATE_DB = false
+            MYSQL_CREATE_DB=false
         fi
     fi
 
