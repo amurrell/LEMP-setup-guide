@@ -453,9 +453,9 @@ if [ -z "$NGINX_WITH_PHP" ]; then
     read -p "Do you need to setup nginx with upstreams and php?" -n 1 -r
     echo    # (optional) move to a new line
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        $NGINX_WITH_PHP = true
+        NGINX_WITH_PHP=true
     else
-        $NGINX_WITH_PHP = false
+        NGINX_WITH_PHP=false
     fi
 fi
 
