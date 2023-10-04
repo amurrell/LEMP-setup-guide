@@ -317,7 +317,7 @@ fi
 # Extract repo name from the github URL
 get_repo_name() {
     local url="$1"
-    echo "$url" | cut -d'/' -f 2 | cut -d'.' -f 1
+    echo "$url" | awk -F/ '{print $2}' | sed 's/\.git$//'
 }
 
 # Add to ssh config file to ensure this host uses the correct key for the repo
