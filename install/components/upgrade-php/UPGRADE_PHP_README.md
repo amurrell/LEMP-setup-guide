@@ -47,3 +47,31 @@ Example: upgrade-php.sh 8.0 8.2
 ```sh
 $DEBUG=true ./upgrade-php.sh OLD_VERSION NEW_VERSION
 ```
+
+### Helpful commands
+<!-- Give people commands to check pool.d configs, nginx site configs, look for sockets -->
+
+- Get php version
+```sh
+php -v
+```
+
+- Check pool.d configs (this will show the old and new versions)
+```sh
+grep -R "listen = /var/run/php" /etc/php/*/fpm/pool.d/
+```
+
+- Look for sockets    
+```sh
+ls -al /var/run/ | grep php
+```
+
+- Check nginx site configs
+```sh
+grep -R "unix:/var/run/php" /etc/nginx/sites-enabled/
+```
+
+- Find running php-fpm processes
+```sh
+ps aux | grep php-fpm
+```
