@@ -183,6 +183,7 @@ There are also **components** in the `install` folder, which allow you to instal
 - redis
 - postgressql
 - custom
+- upgrade-php (see [Upgrade PHP Readme for help](./install/components/upgrade-php/UPGRADE_PHP_README.md))
 
 ### Custom Scripts
 

@@ -91,8 +91,6 @@ phpenmod -v $NEW_PHP_VERSION xmlreader
 phpenmod -v $NEW_PHP_VERSION simplexml
 phpenmod -v $NEW_PHP_VERSION gd
 
-# TODO: Why are there not more of these to enable? Compared to number that we installed
-
 # make edits to www.conf file if needed
 PHP_WWW_CONF=/etc/php/${NEW_PHP_VERSION}/fpm/pool.d/www.conf
 if [ ! -f $PHP_WWW_CONF ]; then
