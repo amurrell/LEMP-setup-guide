@@ -9,5 +9,6 @@ LOG_PATH {
     postrotate
         systemctl reload PHP_FPM
         systemctl reload nginx
+        chown www-data:www-data LOG_PATH
     endscript
 }
