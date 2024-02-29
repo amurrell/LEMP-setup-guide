@@ -1,4 +1,5 @@
 LOG_PATH {
+    su www-data www-data
     daily
     missingok
     rotate 14
@@ -7,7 +8,7 @@ LOG_PATH {
     create 0640 www-data www-data
     sharedscripts
     postrotate
-        systemctl reload PHP_FPM
-        systemctl reload nginx
+        sudo systemctl reload PHP_FPM
+        sudo systemctl reload nginx
     endscript
 }

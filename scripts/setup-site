@@ -27,7 +27,7 @@ ORIGINAL_ARG_COUNT=$#
 #   --deploy-key-private-file=path-to-key \
 #   --php-pools=true \
 #   --nginx-with-php=true \
-#   --nginx-site-conf-path=/var/www/LEMP-setup-guide/config/site.nginx.conf (or site.vueapp.nginx.conf) \
+#   --nginx-site-conf-path=/var/www/LEMP-setup-guide/config/site.nginx.conf (or site.nginx.vueapp.conf) \
 #   --php-with-mysql=true \
 #   --php-site-conf-path=/var/www/LEMP-setup-guide/config/site.php-fpm.conf \
 #   --mysql-create-db=true \
@@ -48,12 +48,12 @@ OWNER_USER=$(whoami)
 ORIGINAL_USER=$(whoami)
 DEPLOY_KEY_PUBLIC=false
 DEPLOY_KEY_PRIVATE=false
-PHP_POOLS=false
-NGINX_WITH_PHP=false
+PHP_POOLS=""
+NGINX_WITH_PHP=""
 NGINX_SITE_CONF_PATH=""
-PHP_WITH_MYSQL=false
+PHP_WITH_MYSQL=""
 PHP_SITE_CONF_PATH=""
-MYSQL_CREATE_DB=false
+MYSQL_CREATE_DB=""
 MYSQL_ROOT_USER=""
 MYSQL_ROOT_PASS=""
 DATABASE_NAME=""
@@ -75,7 +75,7 @@ help_message() {
     printf "  --deploy-key-private-file=PATH    Specify the path to the private deploy key file\n"
     printf "  --php-pools=true|false            Specify if you want to setup php pools; default is false\n"
     printf "  --nginx-with-php=true|false       Specify if you want to setup nginx with php upstreams; default is false\n"
-    printf "  --nginx-site-conf-path=PATH       Specify the path to the nginx site conf file; default is /var/www/LEMP-setup-guide/config/site.nginx.conf  (or site.vueapp.nginx.conf)\n"
+    printf "  --nginx-site-conf-path=PATH       Specify the path to the nginx site conf file; default is /var/www/LEMP-setup-guide/config/site.nginx.conf  (or site.nginx.vueapp.conf)\n"
     printf "  --php-with-mysql=true|false       Specify if you want to setup php with mysql env vars; default is false\n"
     printf "  --php-site-conf-path=PATH         Specify the path to the php site conf file; default is /var/www/LEMP-setup-guide/config/site.php-fpm.conf\n"
     printf "  --mysql-create-db=true|false      Specify if you want to setup mysql database; default is false\n"
@@ -139,10 +139,18 @@ while [[ $# -gt 0 ]]; do
         ;;
         --php-pools=*)
         PHP_POOLS="${key#*=}"
+        # make sure it is either true or false if passed
+        if [ "$PHP_POOLS" != "true" ] && [ "$PHP_POOLS" != "false" ]; then
+            PHP_POOLS=false
+        fi
         shift
         ;;
         --nginx-with-php=*)
         NGINX_WITH_PHP="${key#*=}"
+        # make sure it is either true or false if passed
+        if [ "$NGINX_WITH_PHP" != "true" ] && [ "$NGINX_WITH_PHP" != "false" ]; then
+            NGINX_WITH_PHP=false
+        fi
         shift
         ;;
         --nginx-site-conf-path=*)
@@ -151,6 +159,10 @@ while [[ $# -gt 0 ]]; do
         ;;
         --php-with-mysql=*)
         PHP_WITH_MYSQL="${key#*=}"
+        # make sure it is either true or false if passed
+        if [ "$PHP_WITH_MYSQL" != "true" ] && [ "$PHP_WITH_MYSQL" != "false" ]; then
+            PHP_WITH_MYSQL=false
+        fi
         shift
         ;;
         --php-site-conf-path=*)
@@ -159,6 +171,10 @@ while [[ $# -gt 0 ]]; do
         ;;
         --mysql-create-db=*)
         MYSQL_CREATE_DB="${key#*=}"
+        # make sure it is either true or false if passed
+        if [ "$MYSQL_CREATE_DB" != "true" ] && [ "$MYSQL_CREATE_DB" != "false" ]; then
+            MYSQL_CREATE_DB=false
+        fi
         shift
         ;;
         --mysql-root-user=*)
@@ -201,6 +217,34 @@ while [[ $# -gt 0 ]]; do
         ;;
     esac
 done
+
+fix_root_path() {
+    local domain="$1"
+    local nginx_conf_path="$2"
+
+    # Ensure domain and nginx_conf_path are provided
+    if [[ -z "$domain" || -z "$nginx_conf_path" ]]; then
+        echo "Error: Either domain or nginx_conf_path is not provided."
+        return 1
+    fi
+
+    # Read the 'root' line from the provided nginx configuration file
+    local root_line=$(sed -n '/^[ \t]*root [^;]*;/p' "$nginx_conf_path")
+
+    # printf "========== ROOT LINE\n"
+    # printf "$root_line\n"
+
+    # Remove double slashes and trailing slash before the semicolon
+    local modified_line=$(echo "$root_line" | sed 's#//\+#/#g' | sed 's#/\(;\)$#\1#')
+    # printf "========== MODIFIED ROOT LINE\n"
+    # printf "$modified_line\n"
+
+    # Use sed to replace root_line with modified_line in the provided nginx configuration file
+    sed -i "s#$(echo "$root_line" | sed 's#[\&/\.]#\\&#g')#$modified_line#g" "$nginx_conf_path"
+
+    # printf "========== AFTER SED\n"
+    # cat "$nginx_conf_path"
+}
 
 ## SSH_PATH
 # if OWNER_USER is the same as whoami, then we can use the ssh keys in ${SSH_PATH}
@@ -273,7 +317,7 @@ fi
 # Extract repo name from the github URL
 get_repo_name() {
     local url="$1"
-    echo "$url" | cut -d'/' -f 2 | cut -d'.' -f 1
+    echo "$url" | awk -F/ '{print $2}' | sed 's/\.git$//'
 }
 
 # Add to ssh config file to ensure this host uses the correct key for the repo
@@ -421,9 +465,9 @@ if [ -z "$NGINX_WITH_PHP" ]; then
     read -p "Do you need to setup nginx with upstreams and php?" -n 1 -r
     echo    # (optional) move to a new line
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        $NGINX_WITH_PHP = true
+        NGINX_WITH_PHP=true
     else
-        $NGINX_WITH_PHP = false
+        NGINX_WITH_PHP=false
     fi
 fi
 
@@ -433,7 +477,7 @@ apply_nginx_config() {
     cd /etc/nginx/sites-available/
     sed -i "s/SITEDOTCOM/${DOMAIN}/g" "$DOMAIN.conf"
     sed -i "s/SITE_COM/${DOMAIN_COM}/g" "$DOMAIN.conf"
-    sed -i "s/WEBROOTPATH/${WEB_ROOT_PATH}/g" "$DOMAIN.conf"
+    sed -i "s|WEBROOTPATH|${WEB_ROOT_PATH}|g" "$DOMAIN.conf"
     ln -s /etc/nginx/sites-available/"${DOMAIN}.conf" /etc/nginx/sites-enabled/
 
     # if we have DEPLOY_SUBFOLDER and therefore a "current" directory - then we need to sed some stuff in nginx
@@ -441,6 +485,9 @@ apply_nginx_config() {
         # For lines that do not contain '/var/www/${DOMAIN}/current', replace '/var/www/${DOMAIN}/' with '/var/www/${DOMAIN}/current/'
         sed -i "/var\/www\/${DOMAIN}\/current/!s/var\/www\/${DOMAIN}\//var\/www\/${DOMAIN}\/current\//g" "$DOMAIN.conf"
     fi
+
+    # fix root path
+    fix_root_path "$DOMAIN" "$DOMAIN.conf"
 }
 
 # (only) if NGINX_SITE_CONF_PATH is empty, does NGINX_WITH_PHP matter in determining the default used:
@@ -450,7 +497,7 @@ if [ -z "$NGINX_SITE_CONF_PATH" ]; then
         NGINX_SITE_CONF_PATH="/var/www/LEMP-setup-guide/config/site.nginx.conf"
     else
         # use vueapp version
-        NGINX_SITE_CONF_PATH="/var/www/LEMP-setup-guide/config/site.vueapp.nginx.conf"
+        NGINX_SITE_CONF_PATH="/var/www/LEMP-setup-guide/config/site.nginx.vueapp.conf"
     fi
 fi
 
@@ -470,9 +517,9 @@ if [ -z "$PHP_POOLS" ]; then
     read -p "Do you need to set up PHP FPM pools?" -n 1 -r
     echo    # (optional) move to a new line
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        $PHP_POOLS = true
+        PHP_POOLS=true
     else
-        $PHP_POOLS = false
+        PHP_POOLS=false
     fi
 fi
 
@@ -504,9 +551,9 @@ if [ -z "$PHP_WITH_MYSQL" ]; then
     read -p "Do you want to setup PHP environmental variables for a mysql database? " -n 1 -r
     echo    # (optional) move to a new line
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        $PHP_WITH_MYSQL = true
+        PHP_WITH_MYSQL=true
     else
-        $PHP_WITH_MYSQL = false
+        PHP_WITH_MYSQL=false
     fi
 fi
 
@@ -555,9 +602,9 @@ then
         read -p "Do you want to setup a local mysql database using the info for php env vars above? " -n 1 -r
         echo    # (optional) move to a new line
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            $MYSQL_CREATE_DB = true
+            MYSQL_CREATE_DB=true
         else
-            $MYSQL_CREATE_DB = false
+            MYSQL_CREATE_DB=false
         fi
     fi
 
